@@ -12586,6 +12586,7 @@ function clawGenerateLevel() {
         rl.playerLives = 3;
         rl.gravesLives = 3;
         rl.currentRound = 0;
+rl.firstPlayer = Math.random() < 0.5 ? 'player' : 'graves'; 
         rl.busy = false;
         rl.sessionId = Date.now() + Math.random(); 
         rl.active = true;
@@ -12675,7 +12676,11 @@ function clawGenerateLevel() {
         rl.chambers = prepareChambers(bulletCount);
 
         // 先手交替：第 1 局玩家，第 2 局格瑞夫斯，循环
-        rl.firstTurn = (rl.currentRound % 2 === 1) ? 'player' : 'graves';
+        // 单数局用 firstPlayer，双数局用另一方
+const isOddRound = (rl.currentRound % 2 === 1);
+rl.firstTurn = isOddRound
+    ? rl.firstPlayer
+    : (rl.firstPlayer === 'player' ? 'graves' : 'player');
 
         // 清空弹巢高亮
         document.querySelectorAll('.rl-chamber').forEach(c => {
@@ -12690,17 +12695,25 @@ function clawGenerateLevel() {
 
         const statusEl = document.getElementById('rlStatusText');
         if (rl.firstTurn === 'player') {
-            statusEl.textContent = '轮到你扣扳机';
-            setTriggerBtn(true, '扣 动 扳 机');
-            speak(`第 ${rl.currentRound} 局。${bulletCount} 颗子弹。你先来，Darlin'。`);
-        } else {
-            statusEl.textContent = '格瑞夫斯先扣扳机';
-            setTriggerBtn(false, '等 待 中...');
-            speak(`第 ${rl.currentRound} 局。${bulletCount} 颗子弹。这次我先。`);
-            setTimeout(() => {
-                if (rl.active && !rl.busy) gravesTurn();
-            }, 1200);
-        }
+    statusEl.textContent = '轮到你扣扳机';
+    setTriggerBtn(true, '扣 动 扳 机');
+    if (rl.currentRound === 1) {
+        speak(`第 1 局。${bulletCount} 颗子弹。掷硬币你赢了——你先来。`);
+    } else {
+        speak(`第 ${rl.currentRound} 局。${bulletCount} 颗子弹。你先来，Darlin'。`);
+    }
+} else {
+    statusEl.textContent = '格瑞夫斯先扣扳机';
+    setTriggerBtn(false, '格 瑞 夫 斯 的 回 合');
+    if (rl.currentRound === 1) {
+        speak(`第 1 局。${bulletCount} 颗子弹。掷硬币我赢了——我先来。`);
+    } else {
+        speak(`第 ${rl.currentRound} 局。${bulletCount} 颗子弹。这次我先。`);
+    }
+    setTimeout(() => {
+        if (rl.active && !rl.busy) gravesTurn();
+    }, 2200);
+}
     }
 
     function prepareChambers(bulletCount) {
