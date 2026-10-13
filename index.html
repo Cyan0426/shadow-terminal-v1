@@ -12587,6 +12587,7 @@ function clawGenerateLevel() {
         rl.gravesLives = 3;
         rl.currentRound = 0;
         rl.busy = false;
+        rl.sessionId = Date.now() + Math.random(); 
         rl.active = true;
 
         renderBetScreen();
@@ -12886,53 +12887,62 @@ function clawGenerateLevel() {
     };
 
     // ---------- 结算 ----------
-    function endRouletteGame() {
-        const isWin = rl.gravesLives <= 0;
-        let delta;
-        if (isWin) {
-            delta = rl.bet * 2;
-            dispatchFunds += delta;
-            speak('我输了。钱归你。但别得意太早。');
-        } else {
-            delta = -rl.bet * 2;
-            dispatchFunds = Math.max(0, dispatchFunds + delta);
-            speak('愿赌服输。下次记得带够钱。');
-        }
+   function endRouletteGame() {
+    // 👈 1. 防止重复触发结算（比如连点按钮）
+    if (!rl.active) return; 
+    rl.active = false; // 立刻锁定，防止后续重复动作
 
-        if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
-        if (typeof saveGameState === 'function') saveGameState();
-
-        const modal = document.getElementById('rlGameOverModal');
-        const title = document.getElementById('rlGameOverTitle');
-        const rank = document.getElementById('rlGameOverRank');
-        const desc = document.getElementById('rlGameOverDesc');
-
-        if (title) {
-            title.textContent = isWin ? '赌局结束 · 你赢了' : '赌局结束 · 你输了';
-            title.classList.toggle('fail', !isWin);
-        }
-        if (rank) {
-            rank.textContent = isWin ? 'WIN' : 'LOSE';
-            rank.className = 'rl-modal-rank ' + (isWin ? 'win' : 'lose');
-        }
-        if (desc) {
-            const sign = delta >= 0 ? '+' : '-';
-            desc.textContent = `最终命数\n你 ${rl.playerLives} · 格瑞夫斯 ${rl.gravesLives}\n\n资金变动：${sign}$${Math.abs(delta).toLocaleString('en-US')}`;
-        }
-
-        if (modal) modal.classList.add('active');
-
-        // 小号吐槽
-        if (typeof triggerGravesAltMessage === 'function') {
-            setTimeout(() => {
-                if (isWin) {
-                    triggerGravesAltMessage(`Darlin'，愿赌服输。$${(rl.bet * 2).toLocaleString('en-US')} 已经打到你账上了。下次再来。`);
-                } else {
-                    triggerGravesAltMessage(`你输给我 $${(rl.bet * 2).toLocaleString('en-US')}。赌桌上运气不能当饭吃，记住了。`);
-                }
-            }, 3500);
-        }
+    const isWin = rl.gravesLives <= 0;
+    let delta;
+    if (isWin) {
+        delta = rl.bet * 2;
+        dispatchFunds += delta;
+        speak('我输了。钱归你。但别得意太早。');
+    } else {
+        delta = -rl.bet * 2;
+        dispatchFunds = Math.max(0, dispatchFunds + delta);
+        speak('愿赌服输。下次记得带够钱。');
     }
+
+    if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+    if (typeof saveGameState === 'function') saveGameState();
+
+    const modal = document.getElementById('rlGameOverModal');
+    const title = document.getElementById('rlGameOverTitle');
+    const rank = document.getElementById('rlGameOverRank');
+    const desc = document.getElementById('rlGameOverDesc');
+
+    if (title) {
+        title.textContent = isWin ? '赌局结束 · 你赢了' : '赌局结束 · 你输了';
+        title.classList.toggle('fail', !isWin);
+    }
+    if (rank) {
+        rank.textContent = isWin ? 'WIN' : 'LOSE';
+        rank.className = 'rl-modal-rank ' + (isWin ? 'win' : 'lose');
+    }
+    if (desc) {
+        const sign = delta >= 0 ? '+' : '-';
+        desc.textContent = `最终命数\n你 ${rl.playerLives} · 格瑞夫斯 ${rl.gravesLives}\n\n资金变动：${sign}$${Math.abs(delta).toLocaleString('en-US')}`;
+    }
+
+    if (modal) modal.classList.add('active');
+
+    // 👈 2. 捕获当前会话ID，防止切换窗口或重开后数值错乱
+    const currentSession = rl.sessionId;
+
+    if (typeof triggerGravesAltMessage === 'function') {
+        setTimeout(() => {
+            // 👈 3. 关键修复：如果期间玩家重开了游戏，这个回调直接作废
+            if (rl.sessionId !== currentSession) return; 
+            
+            if (isWin) {
+                triggerGravesAltMessage(`Darlin'，愿赌服输。$${(rl.bet * 2).toLocaleString('en-US')} 已经打到你账上了。下次再来。`);
+            } else {
+                triggerGravesAltMessage(`你输给我 $${(rl.bet * 2).toLocaleString('en-US')}。赌桌上运气不能当饭吃，记住了。`);
+            }
+        }, 3500);
+    }
+}
 
     // ---------- 认赔 ----------
     window.rouletteSurrender = function() {
