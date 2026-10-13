@@ -677,8 +677,19 @@
 .app-center-close:hover { color: var(--gold); }
 
 /* App 图标网格 */
-.app-center-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-top: 20px; }
-.app-icon-item { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: transform 0.2s; }
+.app-center-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-top: 20px;
+    flex: 1;              /* 占满剩余高度 */
+    overflow-y: auto;     /* 超出高度允许上下滑动 */
+    padding-bottom: 40px; /* 底部留安全距离 */
+    scrollbar-width: none;/* 隐藏 Firefox 滚动条 */
+}
+.app-center-grid::-webkit-scrollbar { 
+    display: none;        /* 隐藏 Chrome/Safari 滚动条 */
+}.app-icon-item { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: transform 0.2s; }
 .app-icon-item:hover { transform: translateY(-5px); }
 
 .app-icon { width: 70px; height: 70px; border-radius: 16px; background: rgba(212, 175, 55, 0.05); border: 1px solid var(--gold-dark); display: flex; justify-content: center; align-items: center; font-size: 28px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: all 0.2s; }
