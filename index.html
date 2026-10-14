@@ -14073,7 +14073,17 @@ function triggerPlayerEvent(evt, planeIdx) {
 
     document.getElementById('saEventModal').classList.add('active');
 
+    // 👇 核心修复：空中加油不切换回合
+    const isRefuel = (evt === 'refuel');
+
     sa.afterEventCallback = () => {
+        if (isRefuel) {
+            // 空中加油：applyEvent 里已经把 hasRolled 重置、按钮亮起，
+            // 这里什么都不做，让玩家继续掷骰子
+            if (checkWin('player')) endGame('player');
+            return; // 关键：不切到格瑞夫斯
+        }
+
         if (checkWin('player')) {
             endGame('player');
         } else {
@@ -14081,7 +14091,6 @@ function triggerPlayerEvent(evt, planeIdx) {
         }
     };
 }
-
 window.saCloseEventModal = function() {
     document.getElementById('saEventModal').classList.remove('active');
     if (sa.afterEventCallback) {
