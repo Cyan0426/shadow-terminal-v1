@@ -402,7 +402,7 @@
 .catering-item-add { position: absolute; bottom: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: var(--gold-dark); color: var(--gold); display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; }
 
 /* 悬浮购物车 */
-.cart-fab { position: absolute; bottom: 100px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--gold-gradient); color: var(--bg-dark); font-size: 22px; display: none; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); z-index: 350; transition: transform 0.2s; }
+.cart-fab { position: absolute; bottom: 100px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--gold-gradient); color: var(--bg-dark); font-size: 22px; display: none; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); z-index: 1000; transition: transform 0.2s; }
 .cart-fab.active { display: flex; }
 .cart-fab:hover { transform: scale(1.1); }
 .cart-count { position: absolute; top: -5px; right: -5px; background: #e03e3e; color: #fff; font-size: 11px; width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
@@ -3374,6 +3374,252 @@ body .phone-mockup .header-name {
     line-height: 1.7; margin-bottom: 20px; white-space: pre-line;
 }
 
+/* ================= 暗影空运 · SHADOW AIRLIFT ================= */
+.sa-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    margin: 0 auto; width: 100%; max-width: 420px;
+    background: radial-gradient(circle at top, #16161c 0%, #060608 100%);
+    z-index: 2147483647;
+    display: none; flex-direction: column; padding: 15px;
+    color: var(--text-primary); font-family: 'Consolas', monospace;
+}
+.sa-overlay.active { display: flex; }
+
+.sa-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px; margin-bottom: 10px; flex-shrink: 0;
+}
+.sa-title { font-size: 14px; font-weight: bold; letter-spacing: 2px; color: var(--gold); }
+.sa-close { color: var(--text-secondary); font-size: 20px; cursor: pointer; transition: 0.2s; }
+.sa-close:hover { color: #e03e3e; }
+
+.sa-screen { display: none; flex: 1; flex-direction: column; }
+.sa-screen.active { display: flex; }
+
+/* -------- 下注界面 -------- */
+.sa-funds-display {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 6px; padding: 10px 14px;
+    font-size: 12px; color: var(--text-secondary);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 15px;
+}
+.sa-funds-display span:last-child { color: var(--gold); font-weight: bold; font-size: 14px; }
+
+.sa-bet-title {
+    font-size: 12px; color: var(--text-secondary);
+    letter-spacing: 2px; text-align: center; margin-bottom: 12px;
+}
+.sa-bet-options {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-bottom: 15px;
+}
+.sa-bet-option {
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: 8px; padding: 14px 6px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+    font-size: 13px; font-weight: bold; color: var(--text-primary);
+}
+.sa-bet-option:hover:not(.disabled) { border-color: var(--gold-dim); background: rgba(212,175,55,0.05); }
+.sa-bet-option.selected {
+    border-color: var(--gold); background: rgba(212,175,55,0.15);
+    box-shadow: 0 0 15px rgba(212,175,55,0.3); color: var(--gold);
+}
+.sa-bet-option.disabled { opacity: 0.3; cursor: not-allowed; text-decoration: line-through; }
+.sa-bet-option .sa-bet-sub {
+    font-size: 9px; color: var(--text-muted); margin-top: 4px;
+    font-weight: normal; letter-spacing: 1px;
+}
+.sa-bet-preview {
+    background: rgba(0,0,0,0.3); border: 1px dashed var(--border-light);
+    border-radius: 8px; padding: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 12px; margin-bottom: 15px;
+}
+.sa-bet-preview > div { display: flex; justify-content: space-between; }
+.sa-bet-preview .win { color: #2ecc71; font-weight: bold; }
+.sa-bet-preview .lose { color: #e03e3e; font-weight: bold; }
+.sa-bet-preview .sa-rules {
+    color: var(--text-muted); font-size: 10px;
+    border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 4px;
+    display: block; line-height: 1.5;
+}
+.sa-confirm-btn {
+    background: var(--gold-gradient); color: var(--bg-dark);
+    border: none; border-radius: 8px; padding: 14px;
+    font-size: 13px; font-weight: bold; letter-spacing: 4px;
+    cursor: pointer; transition: opacity 0.2s; font-family: inherit;
+    margin-top: auto;
+}
+.sa-confirm-btn:hover { opacity: 0.85; }
+.sa-confirm-btn:disabled { background: #1a1a22; color: var(--text-muted); cursor: not-allowed; opacity: 1; }
+
+/* -------- 游戏界面 -------- */
+.sa-status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 6px; padding: 8px 12px; margin-bottom: 8px;
+    flex-shrink: 0; font-size: 11px;
+}
+.sa-status-side { display: flex; gap: 6px; align-items: center; }
+.sa-status-side .sa-progress { color: var(--gold); font-weight: bold; }
+.sa-vs { color: var(--gold-dim); font-weight: bold; letter-spacing: 2px; font-size: 11px; }
+
+.sa-board {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 3px;
+    background: #0a0a0c;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 6px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+.sa-cell {
+    aspect-ratio: 1 / 0.85;
+    background: #121216;
+    border: 1px solid #2a2a35;
+    border-radius: 4px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    position: relative;
+    font-size: 8px; color: var(--text-muted);
+    overflow: hidden;
+    padding: 1px;
+    line-height: 1.1;
+}
+.sa-cell.sa-base {
+    background: rgba(212,175,55,0.08);
+    border-color: var(--gold-dim);
+    color: var(--gold);
+}
+.sa-cell .sa-cell-num {
+    position: absolute; top: 1px; left: 3px;
+    font-size: 7px; color: var(--text-muted);
+}
+.sa-cell .sa-cell-event {
+    font-size: 13px; line-height: 1;
+}
+.sa-cell .sa-cell-planes {
+    position: absolute; bottom: 1px; right: 2px;
+    display: flex; gap: 1px; font-size: 10px;
+}
+.sa-plane-player { filter: drop-shadow(0 0 3px #d4af37); }
+.sa-plane-graves { filter: drop-shadow(0 0 3px #e03e3e) hue-rotate(180deg); }
+
+.sa-dice-area {
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 8px; flex-shrink: 0;
+}
+.sa-dice {
+    width: 52px; height: 52px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--gold-dim);
+    display: flex; justify-content: center; align-items: center;
+    font-size: 26px; font-weight: bold; color: var(--gold);
+    font-family: "Arial Black", sans-serif;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+.sa-dice.rolling { animation: saDiceRoll 0.1s linear infinite; }
+@keyframes saDiceRoll {
+    0%,100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(15deg) scale(1.1); }
+}
+.sa-dice-btn {
+    flex: 1;
+    background: var(--gold-gradient); color: var(--bg-dark);
+    border: none; border-radius: 8px;
+    padding: 14px; font-size: 13px; font-weight: bold;
+    letter-spacing: 3px; cursor: pointer; font-family: inherit;
+    transition: opacity 0.2s;
+}
+.sa-dice-btn:hover:not(:disabled) { opacity: 0.85; }
+.sa-dice-btn:disabled { background: #1a1a22; color: var(--text-muted); cursor: not-allowed; opacity: 1; }
+
+.sa-plane-selector {
+    display: flex; gap: 8px; margin-bottom: 8px; flex-shrink: 0;
+}
+.sa-plane-card {
+    flex: 1;
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: 6px; padding: 8px;
+    text-align: center; cursor: pointer;
+    font-size: 11px; transition: all 0.2s;
+}
+.sa-plane-card:hover:not(.disabled) { border-color: var(--gold-dim); background: rgba(212,175,55,0.05); }
+.sa-plane-card.selected {
+    border-color: var(--gold); background: rgba(212,175,55,0.15);
+    box-shadow: 0 0 12px rgba(212,175,55,0.3);
+}
+.sa-plane-card.disabled {
+    opacity: 0.3; cursor: not-allowed;
+}
+.sa-plane-card .sa-plane-pos {
+    font-size: 10px; color: var(--gold); margin-top: 3px;
+    font-weight: bold;
+}
+.sa-plane-card .sa-plane-tag {
+    font-size: 9px; color: var(--text-muted); margin-top: 2px;
+}
+
+.sa-graves-bubble {
+    background: rgba(12,12,16,0.95);
+    border: 1px solid var(--gold-dim);
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 11px; color: var(--gold); line-height: 1.4;
+    margin-top: auto; flex-shrink: 0;
+    min-height: 42px;
+    display: flex; align-items: center;
+}
+.sa-graves-bubble::before { content: '🤠'; margin-right: 8px; font-size: 15px; }
+
+/* -------- 弹窗 -------- */
+.sa-modal {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    display: none; justify-content: center; align-items: center;
+    padding: 30px; z-index: 100;
+}
+.sa-modal.active { display: flex; }
+.sa-modal-card {
+    background: var(--bg-card); border: 1px solid var(--gold);
+    border-radius: 12px; padding: 22px;
+    text-align: center; width: 100%; max-width: 320px;
+    box-shadow: 0 0 40px rgba(212,175,55,0.2);
+    animation: blindboxAppear 0.4s ease-out;
+}
+.sa-modal-title {
+    font-size: 15px; font-weight: bold; color: var(--gold);
+    letter-spacing: 2px; margin-bottom: 12px;
+    border-bottom: 1px solid var(--gold-dark); padding-bottom: 8px;
+}
+.sa-event-icon {
+    font-size: 48px; margin: 8px 0 12px;
+    filter: drop-shadow(0 0 15px rgba(212,175,55,0.5));
+}
+.sa-modal-desc {
+    font-size: 12px; color: var(--text-primary);
+    line-height: 1.7; margin-bottom: 16px; white-space: pre-line;
+}
+.sa-modal-rank {
+    font-size: 50px; font-weight: bold; margin-bottom: 12px;
+    letter-spacing: 4px;
+}
+.sa-modal-rank.win {
+    background: var(--gold-gradient);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(212,175,55,0.5);
+}
+.sa-modal-rank.lose { color: #e03e3e; text-shadow: 0 0 15px rgba(224,62,62,0.5); }
+.sa-btn-primary {
+    background: var(--gold-gradient); color: var(--bg-dark);
+    border: none; border-radius: 6px; padding: 12px;
+    font-size: 13px; font-weight: bold; letter-spacing: 2px;
+    cursor: pointer; font-family: inherit; transition: opacity 0.2s;
+}
+.sa-btn-primary:hover { opacity: 0.85; }
+
 </style>
 <style>
 /* ================= 暗影回收 · 抓取游戏 ================= */
@@ -4467,6 +4713,40 @@ async function sendVoiceMessageToGraves(text) {
     .blackbox-report-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: var(--text-secondary); }
     .blackbox-report-row span:last-child { color: var(--text-primary); font-weight: bold; }
     .blackbox-report-note { font-size: 12px; color: var(--gold); background: rgba(212, 175, 55, 0.05); border-left: 3px solid var(--gold); padding: 12px; margin-top: 15px; border-radius: 4px; line-height: 1.6; }
+
+/* 行政拨划栏 */
+.checkout-admin-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 10px;
+    margin: 8px 0 14px 0;
+    border-top: 1px dashed var(--gold-dark);
+    border-bottom: 1px dashed var(--gold-dark);
+    background: rgba(212, 175, 55, 0.03);
+    border-radius: 4px;
+}
+.checkout-admin-label {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 2px;
+    line-height: 1.4;
+}
+.checkout-admin-sub {
+    font-size: 9px;
+    color: var(--gold-dim);
+    letter-spacing: 2px;
+    font-weight: normal;
+}
+.checkout-admin-value {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 20px;
+    font-family: 'Consolas', monospace;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
 </style>
 
 <div class="blackbox-overlay" id="blackboxOverlay">
@@ -6234,9 +6514,13 @@ let currentCateringCat = 'meat';
 let cartItems = [];
 
 function openCatering() {
-        const drawer = document.getElementById('cateringDrawer');
+    // 👇 新增：隐藏右下角手机按钮
+    const fab = document.querySelector('.memo-fab');
+    if (fab) fab.style.display = 'none';
+
+    const drawer = document.getElementById('cateringDrawer');
     if (drawer) drawer.classList.add('active');
-    cartItems = []; // 每次打开清空购物车
+    cartItems = [];
     updateCartCount();
     switchCateringTab('meat', document.querySelector('.catering-tab'));
 }
@@ -6246,6 +6530,10 @@ function closeCatering() {
     if (drawer) drawer.classList.remove('active');
     const cart = document.getElementById('cartFab');
     if (cart) cart.classList.remove('active');
+
+    // 👇 新增：恢复右下角手机按钮
+    const fab = document.querySelector('.memo-fab');
+    if (fab) fab.style.display = '';
 }
 
 function switchCateringTab(cat, element) {
@@ -9687,6 +9975,7 @@ window.addEventListener('load', function() {
         <div class="app-icon-item" onclick="openClawGame()"><div class="app-icon">🪝</div><div class="app-name">暗影回收</div></div>
         <div class="app-icon-item" onclick="openMineGame()"><div class="app-icon">💣</div><div class="app-name">暗影扫雷</div></div>
         <div class="app-icon-item" onclick="openRoulette()"><div class="app-icon">🎰</div><div class="app-name">暗影赌局</div></div>
+        <div class="app-icon-item" onclick="openShadowAirlift()"><div class="app-icon">✈️</div><div class="app-name">暗影空运</div></div>
 </div>
 </div>
 
@@ -9788,6 +10077,25 @@ window.addEventListener('load', function() {
 <!-- 悬浮购物车按钮 -->
 <div class="cart-fab" id="cartFab" onclick="openCheckout()">🛒<span class="cart-count" id="cartCount">0</span></div>
 
+<!-- 结算面板（购物车结算） -->
+<div class="checkout-overlay" id="checkoutOverlay">
+    <div class="checkout-panel">
+        <div class="checkout-items" id="checkoutItems"></div>
+ <div class="checkout-admin-row">
+            <span class="checkout-admin-label">
+                行政拨划<br>
+                <span class="checkout-admin-sub">EXECUTIVE DISBURSEMENT</span>
+            </span>
+            <span class="checkout-admin-value">$0.00</span>
+        </div>
+        <div class="checkout-address">
+            <label>配送地址 · DELIVERY ADDRESS</label>
+            <input type="text" id="deliveryAddress" placeholder="默认地址（德克萨斯庄园）">
+        </div>
+        <button class="checkout-submit" onclick="submitOrder()">提交订单</button>
+    </div>
+</div>
+
 <!-- ================= 好感拜访互动系统 ================= -->
 <div class="affection-overlay" id="affectionOverlay">
     <div class="affection-header">
@@ -9871,9 +10179,9 @@ window.addEventListener('load', function() {
         <div class="modal-title">?? 营养师拦截</div>
         <div class="modal-msg" id="nutritionistMsg">检测到不健康饮食，是否强制下单？</div>
         <div class="modal-btn-group">
-            <button class="modal-btn cancel" onclick="cancelPayment()">取消订单</button>
-            <button class="modal-btn" onclick="exemptAndPay()">我就要吃 · 强制支付</button>
-        </div>
+    <button class="modal-btn cancel" onclick="cancelPayment()">取消拨划</button>
+    <button class="modal-btn" onclick="exemptAndPay()">强制拨划</button>
+</div>
     </div>
 </div>
 
@@ -13330,6 +13638,695 @@ rl.firstTurn = isOddRound
     </div>
 </div>
 
+<!-- 暗影空运 · 飞行棋 -->
+<div class="sa-overlay" id="saOverlay">
+    <div class="sa-header">
+        <div class="sa-title">暗影空运 · SHADOW AIRLIFT</div>
+        <div class="sa-close" onclick="closeShadowAirlift()">✕</div>
+    </div>
+
+    <!-- 下注界面 -->
+    <div class="sa-screen active" id="saBetScreen">
+        <div class="sa-funds-display">
+            <span>黑色行动资金</span>
+            <span id="saFundsAmount">$0</span>
+        </div>
+        <div class="sa-bet-title">选择你的赌注</div>
+        <div class="sa-bet-options" id="saBetOptions"></div>
+        <div class="sa-bet-preview">
+            <div><span>赢了 · 净赚 2 倍</span><span class="win" id="saWinPreview">+ $0</span></div>
+            <div><span>输了 · 净赔 2 倍</span><span class="lose" id="saLosePreview">- $0</span></div>
+            <div class="sa-rules">规则：双方各 2 架运输机。从德州出发，先让两架全部抵达加勒比者胜。<br>路线：德州 → 乌克兰 → 欧洲 → 中东 → 缅甸 → 加勒比。</div>
+        </div>
+        <button class="sa-confirm-btn" id="saConfirmBtn" onclick="saConfirmBet()" disabled>确 认 下 注</button>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div class="sa-screen" id="saGameScreen">
+        <div class="sa-status-bar">
+            <div class="sa-status-side">
+                <span>你</span>
+                <span class="sa-progress" id="saPlayerProgress">0 / 2</span>
+            </div>
+            <div class="sa-vs">VS</div>
+            <div class="sa-status-side">
+                <span>P. GRAVES</span>
+                <span class="sa-progress" id="saGravesProgress">0 / 2</span>
+            </div>
+        </div>
+
+        <div class="sa-board" id="saBoard"></div>
+
+        <div class="sa-dice-area">
+            <div class="sa-dice" id="saDice">🎲</div>
+            <button class="sa-dice-btn" id="saDiceBtn" onclick="saRollDice()">掷 骰 子</button>
+        </div>
+
+        <div class="sa-plane-selector" id="saPlaneSelector">
+            <div class="sa-plane-card disabled" id="saPlane0" onclick="saSelectPlane(0)">
+                <div>运输机 A</div>
+                <div class="sa-plane-pos" id="saPlane0Pos">位置 0</div>
+                <div class="sa-plane-tag" id="saPlane0Tag">德州</div>
+            </div>
+            <div class="sa-plane-card disabled" id="saPlane1" onclick="saSelectPlane(1)">
+                <div>运输机 B</div>
+                <div class="sa-plane-pos" id="saPlane1Pos">位置 0</div>
+                <div class="sa-plane-tag" id="saPlane1Tag">德州</div>
+            </div>
+        </div>
+
+        <div class="sa-graves-bubble" id="saGravesBubble">Darlin'，准备好起飞了吗？</div>
+    </div>
+
+    <!-- 事件弹窗 -->
+    <div class="sa-modal" id="saEventModal">
+        <div class="sa-modal-card">
+            <div class="sa-modal-title" id="saEventTitle">事件</div>
+            <div class="sa-event-icon" id="saEventIcon">🎯</div>
+            <div class="sa-modal-desc" id="saEventDesc"></div>
+            <button class="sa-btn-primary" onclick="saCloseEventModal()" style="width:100%;">确 认</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div class="sa-modal" id="saGameOverModal">
+        <div class="sa-modal-card">
+            <div class="sa-modal-title" id="saGameOverTitle">游戏结束</div>
+            <div class="sa-modal-rank win" id="saGameOverRank">WIN</div>
+            <div class="sa-modal-desc" id="saGameOverDesc"></div>
+            <button class="sa-btn-primary" onclick="closeShadowAirlift()" style="width:100%;">退 出</button>
+        </div>
+    </div>
+</div>
+<script>
+/* ================= 暗影空运 · 飞行棋逻辑 (1/3) ================= */
+(function() {
+    const SA_TOTAL = 36;
+    const SA_BASES = [0, 7, 14, 21, 28, 35];
+    const SA_BASE_NAMES = ['德州', '乌克兰', '欧洲', '中东', '缅甸', '加勒比'];
+    const SA_END = 35;
+
+    const SA_BETS = [
+        { amount: 200000,  label: '$20 万' },
+        { amount: 500000,  label: '$50 万' },
+        { amount: 1000000, label: '$100 万' }
+    ];
+    const SA_MIN_FUNDS = 200000;
+
+    const SA_EVENT_STYLES = {
+        support:   { emoji: '🎯', name: '空中支援', color: '#2ecc71' },
+        ambush:    { emoji: '💥', name: '遭遇伏击', color: '#e03e3e' },
+        fuel:      { emoji: '🛢️', name: '燃料泄漏', color: '#e67e22' },
+        jam:       { emoji: '📡', name: '通讯干扰', color: '#9b59b6' },
+        refuel:    { emoji: '⛽', name: '空中加油', color: '#3498db' },
+        missile:   { emoji: '🚀', name: '战术导弹', color: '#e03e3e' },
+        satellite: { emoji: '🛰️', name: '卫星链路', color: '#d4af37' }
+    };
+
+    const sa = {
+        bet: 0,
+        playerPlanes: [0, 0],
+        gravesPlanes: [0, 0],
+        events: {},
+        active: false,
+        busy: false,
+        currentTurn: 'player',
+        hasRolled: false,
+        diceValue: 0,
+        playerShield: false,
+        gravesShield: false,
+        playerSkipNext: false,
+        gravesSkipNext: false,
+        playerHalfNext: false,
+        gravesHalfNext: false,
+        afterEventCallback: null,
+        sessionId: 0
+    };
+
+    // ---------- 工具 ----------
+    function isBase(pos) { return SA_BASES.indexOf(pos) >= 0; }
+
+    function getBaseName(pos) {
+        const idx = SA_BASES.indexOf(pos);
+        return idx >= 0 ? SA_BASE_NAMES[idx] : '';
+    }
+
+    function findNextBase(pos) {
+        for (let b of SA_BASES) { if (b > pos) return b; }
+        return SA_END;
+    }
+
+    function findPrevBase(pos) {
+        let prev = 0;
+        for (let b of SA_BASES) { if (b < pos) prev = b; else break; }
+        return prev;
+    }
+
+    // ---------- 事件生成 ----------
+    function generateEvents() {
+        const events = {};
+        const pathPositions = [];
+        for (let i = 0; i <= SA_END; i++) {
+            if (!isBase(i)) pathPositions.push(i);
+        }
+        const types = Object.keys(SA_EVENT_STYLES);
+        const shuffled = [...pathPositions].sort(() => Math.random() - 0.5);
+        let idx = 0;
+        types.forEach(type => {
+            const count = 4 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < count && idx < shuffled.length; i++) {
+                events[shuffled[idx]] = type;
+                idx++;
+            }
+        });
+        while (idx < shuffled.length) {
+            events[shuffled[idx]] = types[Math.floor(Math.random() * types.length)];
+            idx++;
+        }
+        return events;
+    }
+
+    // ---------- 渲染 ----------
+    function renderBoard() {
+        const boardEl = document.getElementById('saBoard');
+        if (!boardEl) return;
+        boardEl.innerHTML = '';
+
+        for (let i = 0; i <= SA_END; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'sa-cell';
+            if (isBase(i)) cell.classList.add('sa-base');
+
+            const evt = sa.events[i];
+            const evtStyle = evt ? SA_EVENT_STYLES[evt] : null;
+
+            let planesHTML = '';
+            const playerHere = sa.playerPlanes.filter(p => p === i).length;
+            const gravesHere = sa.gravesPlanes.filter(p => p === i).length;
+            for (let k = 0; k < playerHere; k++) {
+                planesHTML += `<span class="sa-plane-player">✈️</span>`;
+            }
+            for (let k = 0; k < gravesHere; k++) {
+                planesHTML += `<span class="sa-plane-graves">✈️</span>`;
+            }
+
+            cell.innerHTML = `
+                <div class="sa-cell-num">${i}</div>
+                ${evtStyle ? `<div class="sa-cell-event" style="filter: drop-shadow(0 0 4px ${evtStyle.color})">${evtStyle.emoji}</div>` : ''}
+                ${planesHTML ? `<div class="sa-cell-planes">${planesHTML}</div>` : ''}
+            `;
+            boardEl.appendChild(cell);
+        }
+    }
+
+    function renderPlayerPlanes() {
+        for (let i = 0; i < 2; i++) {
+            const card = document.getElementById('saPlane' + i);
+            const posEl = document.getElementById('saPlane' + i + 'Pos');
+            const tagEl = document.getElementById('saPlane' + i + 'Tag');
+            const pos = sa.playerPlanes[i];
+            if (posEl) {
+                if (pos >= SA_END) posEl.textContent = '已抵达 ✓';
+                else posEl.textContent = '位置 ' + pos;
+            }
+            if (tagEl) {
+                tagEl.textContent = isBase(pos) ? getBaseName(pos) : '航线上';
+            }
+            if (card) {
+                if (pos >= SA_END) {
+                    card.classList.add('disabled');
+                } else if (sa.currentTurn === 'player' && sa.hasRolled && !sa.busy) {
+                    card.classList.remove('disabled');
+                } else {
+                    card.classList.add('disabled');
+                }
+            }
+        }
+    }
+
+    function renderProgress() {
+        const pEl = document.getElementById('saPlayerProgress');
+        const gEl = document.getElementById('saGravesProgress');
+        if (pEl) pEl.textContent = sa.playerPlanes.filter(p => p >= SA_END).length + ' / 2';
+        if (gEl) gEl.textContent = sa.gravesPlanes.filter(p => p >= SA_END).length + ' / 2';
+    }
+
+    function updateUI() {
+        renderBoard();
+        renderPlayerPlanes();
+        renderProgress();
+    }
+
+    function setDiceEnabled(enabled, text) {
+        const btn = document.getElementById('saDiceBtn');
+        if (!btn) return;
+        btn.disabled = !enabled;
+        btn.textContent = text || (enabled ? '掷 骰 子' : '等 待 中...');
+    }
+
+    function speak(text) {
+        const el = document.getElementById('saGravesBubble');
+        if (el) el.textContent = text;
+    }
+
+    // ---------- 打开 / 关闭 ----------
+    window.openShadowAirlift = function() {
+        if (typeof closeAllOverlays === 'function') closeAllOverlays();
+        if (typeof closeAppCenter === 'function') closeAppCenter();
+
+        if (typeof dispatchFunds === 'undefined' || dispatchFunds < SA_MIN_FUNDS) {
+            alert('黑色行动资金不足 $20 万。\n暗影空运的燃油和护航都烧钱。');
+            return;
+        }
+
+        const overlay = document.getElementById('saOverlay');
+        if (!overlay) return;
+        if (overlay.parentNode !== document.body) document.body.appendChild(overlay);
+        overlay.classList.add('active');
+
+        sa.sessionId = Date.now() + Math.random();
+        sa.bet = 0;
+        sa.active = true;
+        sa.busy = false;
+        sa.playerPlanes = [0, 0];
+        sa.gravesPlanes = [0, 0];
+        sa.playerShield = false;
+        sa.gravesShield = false;
+        sa.playerSkipNext = false;
+        sa.gravesSkipNext = false;
+        sa.playerHalfNext = false;
+        sa.gravesHalfNext = false;
+        sa.afterEventCallback = null;
+
+        renderBetScreen();
+        showScreen('saBetScreen');
+    };
+
+    window.closeShadowAirlift = function() {
+        sa.active = false;
+        const overlay = document.getElementById('saOverlay');
+        if (overlay) overlay.classList.remove('active');
+        document.querySelectorAll('.sa-modal').forEach(m => m.classList.remove('active'));
+    };
+
+    function showScreen(id) {
+        document.querySelectorAll('.sa-screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(id);
+        if (target) target.classList.add('active');
+    }
+
+    // ---------- 下注 ----------
+    function renderBetScreen() {
+        const fundsEl = document.getElementById('saFundsAmount');
+        if (fundsEl) fundsEl.textContent = '$' + dispatchFunds.toLocaleString('en-US');
+
+        const maxBet = Math.floor(dispatchFunds * 0.5);
+        const optionsEl = document.getElementById('saBetOptions');
+        if (!optionsEl) return;
+        optionsEl.innerHTML = '';
+
+        SA_BETS.forEach(b => {
+            const div = document.createElement('div');
+            div.className = 'sa-bet-option';
+            const disabled = b.amount > maxBet;
+            if (disabled) div.classList.add('disabled');
+            div.innerHTML = `${b.label}<div class="sa-bet-sub">${disabled ? '超出限制' : '可下注'}</div>`;
+            if (!disabled) {
+                div.onclick = () => {
+                    document.querySelectorAll('.sa-bet-option').forEach(o => o.classList.remove('selected'));
+                    div.classList.add('selected');
+                    sa.bet = b.amount;
+                    updateBetPreview();
+                };
+            }
+            optionsEl.appendChild(div);
+        });
+
+        updateBetPreview();
+    }
+
+    function updateBetPreview() {
+        const winEl = document.getElementById('saWinPreview');
+        const loseEl = document.getElementById('saLosePreview');
+        const btn = document.getElementById('saConfirmBtn');
+        if (!winEl || !loseEl || !btn) return;
+        if (sa.bet > 0) {
+            winEl.textContent = '+ $' + (sa.bet * 2).toLocaleString('en-US');
+            loseEl.textContent = '- $' + (sa.bet * 2).toLocaleString('en-US');
+            btn.disabled = false;
+        } else {
+            winEl.textContent = '+ $0';
+            loseEl.textContent = '- $0';
+            btn.disabled = true;
+        }
+    }
+
+    window.saConfirmBet = function() {
+        if (sa.bet <= 0) return;
+        if (sa.bet > Math.floor(dispatchFunds * 0.5)) {
+            alert('下注金额超出 50% 限制。');
+            return;
+        }
+        sa.events = generateEvents();
+        sa.playerPlanes = [0, 0];
+        sa.gravesPlanes = [0, 0];
+        sa.currentTurn = 'player';
+        sa.hasRolled = false;
+        sa.busy = false;
+        showScreen('saGameScreen');
+        updateUI();
+        setDiceEnabled(true, '掷 骰 子');
+        speak(`赌注 $${sa.bet.toLocaleString('en-US')} 已确认。Darlin'，掷出你的运气。`);
+    };
+
+// ---------- 玩家掷骰 ----------
+window.saRollDice = function() {
+    if (!sa.active || sa.busy) return;
+    if (sa.currentTurn !== 'player' || sa.hasRolled) return;
+
+    sa.busy = true;
+    setDiceEnabled(false, '掷 骰 中...');
+
+    const dice = document.getElementById('saDice');
+    if (dice) dice.classList.add('rolling');
+
+    let count = 0;
+    const iv = setInterval(() => {
+        if (!sa.active) { clearInterval(iv); return; }
+        if (dice) dice.textContent = Math.floor(Math.random() * 6) + 1;
+        count++;
+        if (count >= 12) {
+            clearInterval(iv);
+            let roll = Math.floor(Math.random() * 6) + 1;
+            if (sa.playerHalfNext) {
+                roll = Math.max(1, Math.ceil(roll / 2));
+                sa.playerHalfNext = false;
+                speak('燃料泄漏生效，本次移动减半。');
+            }
+            sa.diceValue = roll;
+            if (dice) { dice.textContent = roll; dice.classList.remove('rolling'); }
+            sa.hasRolled = true;
+            sa.busy = false;
+            updateUI();
+            speak(`掷出 ${roll}。选一架运输机移动。`);
+        }
+    }, 70);
+};
+
+// ---------- 玩家选飞机 ----------
+window.saSelectPlane = function(idx) {
+    if (!sa.active || sa.busy) return;
+    if (sa.currentTurn !== 'player' || !sa.hasRolled) return;
+    if (sa.playerPlanes[idx] >= SA_END) return;
+
+    const oldPos = sa.playerPlanes[idx];
+    const newPos = Math.min(oldPos + sa.diceValue, SA_END);
+    sa.playerPlanes[idx] = newPos;
+    sa.hasRolled = false;
+
+    updateUI();
+    setDiceEnabled(false, '等 待 中...');
+
+    const evt = sa.events[newPos];
+    if (evt && newPos !== SA_END) {
+        setTimeout(() => triggerPlayerEvent(evt, idx), 350);
+    } else {
+        if (checkWin('player')) {
+            endGame('player');
+        } else {
+            setTimeout(() => nextTurn(), 500);
+        }
+    }
+};
+
+function triggerPlayerEvent(evt, planeIdx) {
+    const result = applyEvent(evt, 'player', planeIdx);
+    updateUI();
+
+    const style = SA_EVENT_STYLES[evt];
+    const iconEl = document.getElementById('saEventIcon');
+    const titleEl = document.getElementById('saEventTitle');
+    const descEl = document.getElementById('saEventDesc');
+    if (iconEl) iconEl.textContent = style.emoji;
+    if (titleEl) titleEl.textContent = style.name;
+    if (descEl) descEl.textContent = result;
+
+    document.getElementById('saEventModal').classList.add('active');
+
+    sa.afterEventCallback = () => {
+        if (checkWin('player')) {
+            endGame('player');
+        } else {
+            setTimeout(() => nextTurn(), 400);
+        }
+    };
+}
+
+window.saCloseEventModal = function() {
+    document.getElementById('saEventModal').classList.remove('active');
+    if (sa.afterEventCallback) {
+        const cb = sa.afterEventCallback;
+        sa.afterEventCallback = null;
+        cb();
+    }
+};
+
+// ---------- 事件效果 ----------
+function applyEvent(evt, owner, planeIdx) {
+    const planes = owner === 'player' ? sa.playerPlanes : sa.gravesPlanes;
+    const pos = planes[planeIdx];
+
+    switch (evt) {
+        case 'support': {
+            const nb = findNextBase(pos);
+            planes[planeIdx] = nb;
+            return `空中支援抵达，运输机跃升至「${getBaseName(nb) || '终点'}」（位置 ${nb}）。`;
+        }
+        case 'ambush': {
+            const shield = owner === 'player' ? sa.playerShield : sa.gravesShield;
+            if (shield) {
+                if (owner === 'player') sa.playerShield = false;
+                else sa.gravesShield = false;
+                return '卫星链路已激活，伏击被预警拦截。运输机原位不动。';
+            }
+            const pb = findPrevBase(pos);
+            planes[planeIdx] = pb;
+            return `运输机遭遇伏击，被迫撤回到「${getBaseName(pb) || '最近基地'}」（位置 ${pb}）。`;
+        }
+        case 'fuel': {
+            if (owner === 'player') sa.playerHalfNext = true;
+            else sa.gravesHalfNext = true;
+            return '燃油管线受损。下一回合的移动距离将减半。';
+        }
+        case 'jam': {
+            if (owner === 'player') sa.playerSkipNext = true;
+            else sa.gravesSkipNext = true;
+            return '通讯被敌方干扰。下一回合将无法行动。';
+        }
+        case 'refuel': {
+            if (owner === 'player') {
+                sa.hasRolled = false;
+                setDiceEnabled(true, '再 掷 一 次');
+                return '空中加油完成。你可以再掷一次骰子。';
+            } else {
+                return '格瑞夫斯在空中加油，他将获得一次额外投掷。';
+            }
+        }
+        case 'missile': {
+            const opponent = owner === 'player' ? 'graves' : 'player';
+            const oppPlanes = opponent === 'player' ? sa.playerPlanes : sa.gravesPlanes;
+            const oppShield = opponent === 'player' ? sa.playerShield : sa.gravesShield;
+            if (oppShield) {
+                if (opponent === 'player') sa.playerShield = false;
+                else sa.gravesShield = false;
+                return '你锁定了对手，但对方的卫星护盾拦截了导弹。';
+            }
+            let maxPos = -1, maxIdx = -1;
+            oppPlanes.forEach((p, i) => {
+                if (p > maxPos && p < SA_END) { maxPos = p; maxIdx = i; }
+            });
+            if (maxIdx < 0) return '对手所有运输机都已抵达终点，导弹失效。';
+            oppPlanes[maxIdx] = 0;
+            return `导弹命中对手的运输机，对方一架飞机被击落，已返回德州。`;
+        }
+        case 'satellite': {
+            if (owner === 'player') sa.playerShield = true;
+            else sa.gravesShield = true;
+            return '卫星链路已激活。下一次伏击或导弹将被自动拦截。';
+        }
+    }
+    return '';
+}
+    /* ================= 暗影空运 · 飞行棋逻辑 (3/3) ================= */
+
+    // ---------- 回合切换 ----------
+    function nextTurn() {
+        if (!sa.active) return;
+        sa.currentTurn = sa.currentTurn === 'player' ? 'graves' : 'player';
+        sa.hasRolled = false;
+
+        if (sa.currentTurn === 'graves') {
+            if (sa.gravesSkipNext) {
+                sa.gravesSkipNext = false;
+                speak('我的通讯被干扰，这一回合跳过。');
+                setTimeout(() => nextTurn(), 1400);
+                return;
+            }
+            setDiceEnabled(false, '格 瑞 夫 斯 的 回 合');
+            speak('轮到我了。');
+            setTimeout(() => aiRollDice(), 1000);
+        } else {
+            if (sa.playerSkipNext) {
+                sa.playerSkipNext = false;
+                speak('你的通讯被干扰，这一回合跳过。');
+                setDiceEnabled(false, '通 讯 干 扰');
+                setTimeout(() => nextTurn(), 1400);
+                return;
+            }
+            setDiceEnabled(true, '掷 骰 子');
+            speak('轮到你了，Darlin\'。');
+        }
+        updateUI();
+    }
+
+    // ---------- AI 回合 ----------
+    function aiRollDice() {
+        if (!sa.active) return;
+        sa.busy = true;
+        const dice = document.getElementById('saDice');
+        if (dice) dice.classList.add('rolling');
+
+        let count = 0;
+        const iv = setInterval(() => {
+            if (!sa.active) { clearInterval(iv); return; }
+            if (dice) dice.textContent = Math.floor(Math.random() * 6) + 1;
+            count++;
+            if (count >= 12) {
+                clearInterval(iv);
+                let roll = Math.floor(Math.random() * 6) + 1;
+                if (sa.gravesHalfNext) {
+                    roll = Math.max(1, Math.ceil(roll / 2));
+                    sa.gravesHalfNext = false;
+                    speak('我的燃料泄漏了，这一轮跑不远。');
+                }
+                sa.diceValue = roll;
+                if (dice) { dice.textContent = roll; dice.classList.remove('rolling'); }
+                sa.busy = false;
+                speak(`我掷出 ${roll}。`);
+                setTimeout(() => aiSelectPlane(), 800);
+            }
+        }, 70);
+    }
+
+    function aiSelectPlane() {
+        if (!sa.active) return;
+        let bestIdx = -1, bestPos = -1;
+        sa.gravesPlanes.forEach((p, i) => {
+            if (p < SA_END && p > bestPos) { bestPos = p; bestIdx = i; }
+        });
+        if (bestIdx < 0) {
+            if (checkWin('graves')) endGame('graves');
+            else setTimeout(() => nextTurn(), 500);
+            return;
+        }
+        const newPos = Math.min(sa.gravesPlanes[bestIdx] + sa.diceValue, SA_END);
+        sa.gravesPlanes[bestIdx] = newPos;
+        updateUI();
+
+        const evt = sa.events[newPos];
+        if (evt && newPos !== SA_END) {
+            setTimeout(() => triggerGravesEvent(evt, bestIdx), 600);
+        } else {
+            if (checkWin('graves')) {
+                endGame('graves');
+            } else {
+                setTimeout(() => nextTurn(), 700);
+            }
+        }
+    }
+
+    function triggerGravesEvent(evt, planeIdx) {
+        const result = applyEvent(evt, 'graves', planeIdx);
+        updateUI();
+        speak('【' + SA_EVENT_STYLES[evt].name + '】' + result);
+
+        if (evt === 'refuel') {
+            setTimeout(() => {
+                if (!sa.active) return;
+                if (checkWin('graves')) { endGame('graves'); return; }
+                aiRollDice();
+            }, 1200);
+            return;
+        }
+
+        setTimeout(() => {
+            if (checkWin('graves')) endGame('graves');
+            else if (sa.gravesSkipNext) {
+                nextTurn();
+            } else {
+                nextTurn();
+            }
+        }, 1000);
+    }
+
+    // ---------- 胜负 ----------
+    function checkWin(who) {
+        const planes = who === 'player' ? sa.playerPlanes : sa.gravesPlanes;
+        return planes[0] >= SA_END && planes[1] >= SA_END;
+    }
+
+    function endGame(winner) {
+        if (!sa.active) return;
+        sa.active = false;
+
+        const isWin = winner === 'player';
+        let delta;
+        if (isWin) {
+            delta = sa.bet * 2;
+            dispatchFunds += delta;
+            speak('我输了。钱归你。下次再来。');
+        } else {
+            delta = -sa.bet * 2;
+            dispatchFunds = Math.max(0, dispatchFunds + delta);
+            speak('愿赌服输。下次记得带够钱。');
+        }
+
+        if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+        if (typeof saveGameState === 'function') saveGameState();
+
+        const modal = document.getElementById('saGameOverModal');
+        const title = document.getElementById('saGameOverTitle');
+        const rank = document.getElementById('saGameOverRank');
+        const desc = document.getElementById('saGameOverDesc');
+        if (title) {
+            title.textContent = isWin ? '空运成功 · 你赢了' : '空运失败 · 你输了';
+            title.classList.toggle('fail', !isWin);
+        }
+        if (rank) {
+            rank.textContent = isWin ? 'WIN' : 'LOSE';
+            rank.className = 'sa-modal-rank ' + (isWin ? 'win' : 'lose');
+        }
+        if (desc) {
+            const sign = delta >= 0 ? '+' : '-';
+            desc.textContent = `你：${sa.playerPlanes.filter(p => p >= SA_END).length} / 2 抵达\n格瑞夫斯：${sa.gravesPlanes.filter(p => p >= SA_END).length} / 2 抵达\n\n资金变动：${sign}$${Math.abs(delta).toLocaleString('en-US')}`;
+        }
+        if (modal) modal.classList.add('active');
+
+        const currentSession = sa.sessionId;
+        if (typeof triggerGravesAltMessage === 'function') {
+            setTimeout(() => {
+                if (sa.sessionId !== currentSession) return;
+                if (isWin) {
+                    triggerGravesAltMessage(`Darlin'，空运行动结束。$${(sa.bet * 2).toLocaleString('en-US')} 已经到你账上了。下次赌注再大点。`);
+                } else {
+                    triggerGravesAltMessage(`你输给我 $${(sa.bet * 2).toLocaleString('en-US')}。空运要的是规划，不是运气。`);
+                }
+            }, 3500);
+        }
+    }
+})();
+
+</script>
 
 </body>
 </html>
