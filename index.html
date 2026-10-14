@@ -14017,22 +14017,39 @@ window.saRollDice = function() {
         count++;
         if (count >= 12) {
             clearInterval(iv);
-            let roll = Math.floor(Math.random() * 6) + 1;
+            const rawRoll = Math.floor(Math.random() * 6) + 1;
+            if (dice) { dice.textContent = rawRoll; dice.classList.remove('rolling'); }
+
+            // 判断是否燃油泄漏
             if (sa.playerHalfNext) {
-                roll = Math.max(1, Math.ceil(roll / 2));
-                sa.playerHalfNext = false;
-                speak('燃料泄漏生效，本次移动减半。');
+                speak(`掷出 ${rawRoll}。`);
+                // 停顿 900ms，让玩家看到原始点数，然后触发燃油效果
+                setTimeout(() => {
+                    if (!sa.active) return;
+                    const finalRoll = Math.max(1, Math.ceil(rawRoll / 2));
+                    sa.playerHalfNext = false;
+                    sa.diceValue = finalRoll;
+                    if (dice) {
+                        // 闪一下红色表示被修改
+                        dice.style.color = '#e03e3e';
+                        dice.textContent = finalRoll;
+                        setTimeout(() => { dice.style.color = ''; }, 800);
+                    }
+                    sa.hasRolled = true;
+                    sa.busy = false;
+                    updateUI();
+                    speak(`燃油泄漏生效：${rawRoll} → ${finalRoll}。本次只能移动 ${finalRoll} 格。`);
+                }, 900);
+            } else {
+                sa.diceValue = rawRoll;
+                sa.hasRolled = true;
+                sa.busy = false;
+                updateUI();
+                speak(`掷出 ${rawRoll}。选一架运输机移动。`);
             }
-            sa.diceValue = roll;
-            if (dice) { dice.textContent = roll; dice.classList.remove('rolling'); }
-            sa.hasRolled = true;
-            sa.busy = false;
-            updateUI();
-            speak(`掷出 ${roll}。选一架运输机移动。`);
         }
     }, 70);
 };
-
 // ---------- 玩家选飞机 ----------
 window.saSelectPlane = function(idx) {
     if (!sa.active || sa.busy) return;
@@ -14112,21 +14129,22 @@ function applyEvent(evt, owner, planeIdx) {
             return `空中支援抵达，运输机跃升至「${getBaseName(nb) || '终点'}」（位置 ${nb}）。`;
         }
         case 'ambush': {
-            const shield = owner === 'player' ? sa.playerShield : sa.gravesShield;
-            if (shield) {
-                if (owner === 'player') sa.playerShield = false;
-                else sa.gravesShield = false;
-                return '卫星链路已激活，伏击被预警拦截。运输机原位不动。';
-            }
-            const pb = findPrevBase(pos);
-            planes[planeIdx] = pb;
-            return `运输机遭遇伏击，被迫撤回到「${getBaseName(pb) || '最近基地'}」（位置 ${pb}）。`;
-        }
+    const shield = owner === 'player' ? sa.playerShield : sa.gravesShield;
+    if (shield) {
+        if (owner === 'player') sa.playerShield = false;
+        else sa.gravesShield = false;
+        return '卫星链路已激活，伏击被预警拦截。运输机原位不动。';
+    }
+    // 修改点1：最多退后3格，但底线是前一个基地
+    const pb = findPrevBase(pos);
+    planes[planeIdx] = Math.max(pb, pos - 3); 
+    return `运输机遭遇伏击，被迫退后至位置 ${planes[planeIdx]}。`;
+}
         case 'fuel': {
-            if (owner === 'player') sa.playerHalfNext = true;
-            else sa.gravesHalfNext = true;
-            return '燃油管线受损。下一回合的移动距离将减半。';
-        }
+    if (owner === 'player') sa.playerHalfNext = true;
+    else sa.gravesHalfNext = true;
+    return '燃油管线受损。\n下一回合掷骰后，实际移动距离将减半（向上取整）。\n例如：掷出 5 → 只能移动 3 格。';
+}
         case 'jam': {
             if (owner === 'player') sa.playerSkipNext = true;
             else sa.gravesSkipNext = true;
@@ -14142,22 +14160,25 @@ function applyEvent(evt, owner, planeIdx) {
             }
         }
         case 'missile': {
-            const opponent = owner === 'player' ? 'graves' : 'player';
-            const oppPlanes = opponent === 'player' ? sa.playerPlanes : sa.gravesPlanes;
-            const oppShield = opponent === 'player' ? sa.playerShield : sa.gravesShield;
-            if (oppShield) {
-                if (opponent === 'player') sa.playerShield = false;
-                else sa.gravesShield = false;
-                return '你锁定了对手，但对方的卫星护盾拦截了导弹。';
-            }
-            let maxPos = -1, maxIdx = -1;
-            oppPlanes.forEach((p, i) => {
-                if (p > maxPos && p < SA_END) { maxPos = p; maxIdx = i; }
-            });
-            if (maxIdx < 0) return '对手所有运输机都已抵达终点，导弹失效。';
-            oppPlanes[maxIdx] = 0;
-            return `导弹命中对手的运输机，对方一架飞机被击落，已返回德州。`;
-        }
+    const opponent = owner === 'player' ? 'graves' : 'player';
+    const oppPlanes = opponent === 'player' ? sa.playerPlanes : sa.gravesPlanes;
+    const oppShield = opponent === 'player' ? sa.playerShield : sa.gravesShield;
+    if (oppShield) {
+        if (opponent === 'player') sa.playerShield = false;
+        else sa.gravesShield = false;
+        return '你锁定了对手，但对方的卫星护盾拦截了导弹。';
+    }
+    let maxPos = -1, maxIdx = -1;
+    oppPlanes.forEach((p, i) => {
+        if (p > maxPos && p < SA_END) { maxPos = p; maxIdx = i; }
+    });
+    if (maxIdx < 0) return '对手所有运输机都已抵达终点，导弹失效。';
+    
+    // 修改点2：不再炸回0，而是炸回“最近的基地”
+    const fallbackBase = findPrevBase(oppPlanes[maxIdx]);
+    oppPlanes[maxIdx] = fallbackBase;
+    return `导弹命中对手的运输机，对方一架飞机被炸回最近基地「${getBaseName(fallbackBase) || '德州'}」（位置 ${fallbackBase}）。`;
+}
         case 'satellite': {
             if (owner === 'player') sa.playerShield = true;
             else sa.gravesShield = true;
@@ -14199,34 +14220,47 @@ function applyEvent(evt, owner, planeIdx) {
     }
 
     // ---------- AI 回合 ----------
-    function aiRollDice() {
-        if (!sa.active) return;
-        sa.busy = true;
-        const dice = document.getElementById('saDice');
-        if (dice) dice.classList.add('rolling');
+function aiRollDice() {
+    if (!sa.active) return;
+    sa.busy = true;
+    const dice = document.getElementById('saDice');
+    if (dice) dice.classList.add('rolling');
 
-        let count = 0;
-        const iv = setInterval(() => {
-            if (!sa.active) { clearInterval(iv); return; }
-            if (dice) dice.textContent = Math.floor(Math.random() * 6) + 1;
-            count++;
-            if (count >= 12) {
-                clearInterval(iv);
-                let roll = Math.floor(Math.random() * 6) + 1;
-                if (sa.gravesHalfNext) {
-                    roll = Math.max(1, Math.ceil(roll / 2));
+    let count = 0;
+    const iv = setInterval(() => {
+        if (!sa.active) { clearInterval(iv); return; }
+        if (dice) dice.textContent = Math.floor(Math.random() * 6) + 1;
+        count++;
+        if (count >= 12) {
+            clearInterval(iv);
+            const rawRoll = Math.floor(Math.random() * 6) + 1;
+            if (dice) { dice.textContent = rawRoll; dice.classList.remove('rolling'); }
+
+            if (sa.gravesHalfNext) {
+                speak(`我掷出 ${rawRoll}。`);
+                setTimeout(() => {
+                    if (!sa.active) return;
+                    const finalRoll = Math.max(1, Math.ceil(rawRoll / 2));
                     sa.gravesHalfNext = false;
-                    speak('我的燃料泄漏了，这一轮跑不远。');
-                }
-                sa.diceValue = roll;
-                if (dice) { dice.textContent = roll; dice.classList.remove('rolling'); }
+                    sa.diceValue = finalRoll;
+                    if (dice) {
+                        dice.style.color = '#e03e3e';
+                        dice.textContent = finalRoll;
+                        setTimeout(() => { dice.style.color = ''; }, 800);
+                    }
+                    sa.busy = false;
+                    speak(`燃油泄漏生效：${rawRoll} → ${finalRoll}。我这次只能走 ${finalRoll} 格。`);
+                    setTimeout(() => aiSelectPlane(), 1000);
+                }, 900);
+            } else {
+                sa.diceValue = rawRoll;
                 sa.busy = false;
-                speak(`我掷出 ${roll}。`);
+                speak(`我掷出 ${rawRoll}。`);
                 setTimeout(() => aiSelectPlane(), 800);
             }
-        }, 70);
-    }
-
+        }
+    }, 70);
+}
     function aiSelectPlane() {
         if (!sa.active) return;
         let bestIdx = -1, bestPos = -1;
