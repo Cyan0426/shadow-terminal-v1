@@ -5498,6 +5498,7 @@ function closeAllOverlays() {
 function saveGameState() {
     try {
         const state = {
+            tradingBonusClaimed: typeof tradingBonusClaimed !== 'undefined' ? tradingBonusClaimed : { '50m': false, '100m': false },
             memoListData: typeof memoListData !== 'undefined' ? memoListData : [],
             chatHistories: typeof chatHistories !== 'undefined' ? chatHistories : {},
             visitorCalendarSchedules: typeof visitorCalendarSchedules !== 'undefined' ? visitorCalendarSchedules : {},
@@ -5539,6 +5540,7 @@ function loadGameState() {
         if (state.tradingCurrentAssets && state.tradingCurrentAssets.length > 0) tradingCurrentAssets = state.tradingCurrentAssets;
         if (state.tradingLogs) tradingLogs = state.tradingLogs;
         if (state.snakeHighScore) snakeHighScore = state.snakeHighScore;
+        if (state.tradingBonusClaimed) tradingBonusClaimed = state.tradingBonusClaimed;
         if (state.dispatchFunds) dispatchFunds = state.dispatchFunds;
         if (state.medicalReportsData) medicalReportsData = state.medicalReportsData;
 
@@ -7335,9 +7337,21 @@ function moveTactical(direction) {
     addTacticalTile();
     renderTacticalBoard();saveGameState();
     
-    if (checkTacticalWin() && !hasWonTactical) {
+  if (checkTacticalWin() && !hasWonTactical) {
     hasWonTactical = true;
-    showTacticalResult(true);
+    // 👇 新增：发奖励，但不阻断游戏
+    dispatchFunds += 500000;
+    if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+    if (typeof saveGameState === 'function') saveGameState();
+
+    if (typeof triggerGravesAltMessage === 'function') {
+        triggerGravesAltMessage(`战术推演合成了 2048！算力不错。$500,000 奖励已到账，你可以继续推演，争取更高分数。`);
+    }
+
+    // 轻量级提示，不阻断操作，玩家关掉弹窗后可以继续移动
+    setTimeout(() => {
+        alert("战术推演达成 2048！\n\n黑色行动资金奖励：+ $500,000\n\n游戏继续，请继续推演。");
+    }, 200);
 } else if (checkTacticalGameOver()) {
     tacticalGameOver = true;
     showTacticalResult(false);
@@ -7420,6 +7434,7 @@ let tradingCash = 10000000;
 let tradingDay = 1;
 let tradingGameOver = false;
 let tradingCurrentAssets = [];
+let tradingBonusClaimed = { '50m': false, '100m': false };
 
 // 随机新闻池（60%触发）
 const tradingNewsPool = [
@@ -7460,6 +7475,7 @@ function resetTradingGame() {
     tradingCash = 10000000;
     tradingDay = 1;
     tradingGameOver = false;
+    tradingBonusClaimed = { '50m': false, '100m': false };
     tradingLogs = [];
     tradingCurrentAssets = tradingAssetsData.map(asset => ({ ...asset, currentPrice: asset.basePrice }));
     
@@ -7530,63 +7546,68 @@ function renderTradingUI() {
 function buyAsset(index) {
     if (tradingGameOver) return;
     const asset = tradingCurrentAssets[index];
-
-    // 弹出输入框，让玩家自己输入想买多少手
-    const input = prompt(`买入 ${asset.name}\n当前价格：$${asset.currentPrice.toLocaleString('en-US')}/手\n可用现金：$${tradingCash.toLocaleString('en-US')}\n\n请输入想买入的手数（正整数）：`, "1");
     
+    // 弹出输入框，让玩家自己输入想买多少手
+    const input = prompt(`买入 ${asset.name}\n当前价格: $${asset.currentPrice.toLocaleString('en-US')}/手\n可用现金: $${tradingCash.toLocaleString('en-US')}\n\n请输入想买入的手数 (正整数):`, "1");
     if (input === null) return; // 用户点了取消
-
+    
     const qty = parseInt(input);
     if (isNaN(qty) || qty <= 0) {
-        addTradingLog(`买入失败：请输入有效的正整数。`);
+        addTradingLog(`买入失败: 请输入有效的正整数。`);
         return;
     }
-
-    const totalCost = asset.currentPrice * qty;
+    
+    // 👇 核心修改：计算总成本 + 1%手续费
+    const baseCost = asset.currentPrice * qty;
+    const fee = Math.floor(baseCost * 0.01); // 1% 手续费
+    const totalCost = baseCost + fee;
+    
     if (tradingCash < totalCost) {
-        addTradingLog(`资金不足，无法买入 ${qty} 手 ${asset.name}（需要 $${totalCost.toLocaleString('en-US')}）。`);
+        addTradingLog(`资金不足，无法买入 ${qty} 手 ${asset.name} (需要 $${totalCost.toLocaleString('en-US')}，含手续费 $${fee})。`);
         return;
     }
-
+    
     tradingCash -= totalCost;
     asset.holdings += qty;
-    addTradingLog(`买入 ${qty} 手 ${asset.name}，花费 $${totalCost.toLocaleString('en-US')}。`);
+    addTradingLog(`买入 ${qty} 手 ${asset.name}，花费 $${baseCost.toLocaleString('en-US')} + 手续费 $${fee.toLocaleString('en-US')}。`);
     renderTradingUI();
     saveGameState();
 }
-
 function sellAsset(index) {
     if (tradingGameOver) return;
     const asset = tradingCurrentAssets[index];
-
+    
     if (asset.holdings <= 0) {
         addTradingLog(`没有 ${asset.name} 的持仓，无法卖出。`);
         return;
     }
-
-    // 弹出输入框，让玩家自己输入想卖多少手
-    const input = prompt(`卖出 ${asset.name}\n当前价格：$${asset.currentPrice.toLocaleString('en-US')}/手\n当前持仓：${asset.holdings} 手\n\n请输入想卖出的手数（正整数，最多 ${asset.holdings}）：`, "1");
     
-    if (input === null) return; // 用户点了取消
-
-    let qty = parseInt(input);
+    // 弹窗让玩家输入卖出多少手
+    const input = prompt(`卖出 ${asset.name}\n当前价格: $${asset.currentPrice.toLocaleString('en-US')}/手\n持有: ${asset.holdings} 手\n\n请输入想卖出的手数 (正整数，最多 ${asset.holdings} 手):`, "1");
+    if (input === null) return;
+    
+    const qty = parseInt(input);
     if (isNaN(qty) || qty <= 0) {
-        addTradingLog(`卖出失败：请输入有效的正整数。`);
+        addTradingLog(`卖出失败: 请输入有效的正整数。`);
         return;
     }
-
-    // 不能超过持仓数量
     if (qty > asset.holdings) {
-        qty = asset.holdings;
+        addTradingLog(`卖出失败: 持仓不足 ${qty} 手。`);
+        return;
     }
-
-    const totalIncome = asset.currentPrice * qty;
+    
+    // 👇 核心修改：计算应得收益 - 1%手续费
+    const baseRevenue = asset.currentPrice * qty;
+    const fee = Math.floor(baseRevenue * 0.01); // 1% 手续费
+    const actualRevenue = baseRevenue - fee;
+    
     asset.holdings -= qty;
-    tradingCash += totalIncome;
-    addTradingLog(`卖出 ${qty} 手 ${asset.name}，入账 $${totalIncome.toLocaleString('en-US')}。`);
+    tradingCash += actualRevenue;
+    addTradingLog(`卖出 ${qty} 手 ${asset.name}，入账 $${baseRevenue.toLocaleString('en-US')} - 手续费 $${fee.toLocaleString('en-US')}。`);
     renderTradingUI();
     saveGameState();
 }
+
 function nextTradingDay() {
     if (tradingGameOver) return;
     tradingDay++;
@@ -7594,7 +7615,8 @@ function nextTradingDay() {
     // 1. 基础波动
     tradingCurrentAssets.forEach(asset => {
         const change = (Math.random() * 2 - 1) * asset.volatility;
-        asset.currentPrice = Math.max(1000, Math.floor(asset.currentPrice * (1 + change)));
+        // 将底价降至 100，允许玩家抄底，也允许真正意义上的暴跌
+asset.currentPrice = Math.max(100, Math.floor(asset.currentPrice * (1 + change)));
     });
 
     // 2. 随机新闻事件（60%触发）
@@ -7612,14 +7634,47 @@ function nextTradingDay() {
     renderTradingUI();
 saveGameState();
 
-    // 3. 结算判定
+       // 3. 结算判定
     const total = calculateTotalAssets();
-    if (total >= 100000000) {
+    
+    // 🏆 里程碑 1：突破 5000 万（中途奖励，不结束游戏）
+    if (total >= 50000000 && !tradingBonusClaimed['50m']) {
+        tradingBonusClaimed['50m'] = true;
+        dispatchFunds += 10000000; // 增加 1000万
+        if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+        addTradingLog(`🎉 总资产突破5000万！获得黑色行动资金 $10,000,000。`);
+        if (typeof triggerGravesAltMessage === 'function') {
+            triggerGravesAltMessage("Darlin'，我看到你的操盘成绩了。$10,000,000 行动资金已经到账。继续加油，离一亿不远了。");
+        }
+    }
+    
+    // 🏆 里程碑 2：突破 1 亿（通关）
+    if (total >= 100000000 && !tradingBonusClaimed['100m']) {
+        tradingBonusClaimed['100m'] = true;
+        dispatchFunds += 20000000; // 增加 2000万
+        if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+        addTradingLog(`🚀 总资产突破1亿！获得黑色行动资金 $20,000,000。达成通关！`);
+        if (typeof triggerGravesAltMessage === 'function') {
+            triggerGravesAltMessage("一亿。你做到了。这笔 $20,000,000 的奖金是对你实力的认可。收下吧，Darlin'。");
+        }
         tradingGameOver = true;
         showTradingResult(true);
-    } else if (total < 1000000) {
+        return; // 结束函数，避免继续执行破产判定
+    }
+    
+    // 💥 破产判定：总资产低于 100 万
+    if (total < 1000000) {
+        const penalty = Math.floor(dispatchFunds * 0.25); // 扣除 25%
+        dispatchFunds = Math.max(0, dispatchFunds - penalty); // 防止扣成负数
+        
+        if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+        addTradingLog(`💥 资金链断裂，破产清算。扣除黑色行动资金 $${penalty.toLocaleString('en-US')} (25%)。`);
+        if (typeof triggerGravesAltMessage === 'function') {
+            triggerGravesAltMessage(`破产了？这就是市场的残酷。你的行动资金被扣了 25%（$${penalty.toLocaleString('en-US')}）。回去好好复盘吧。`);
+        }
         tradingGameOver = true;
         showTradingResult(false);
+        return;
     }
 }
 
@@ -8182,6 +8237,16 @@ function showSnakeResult() {
         const highScoreEl = document.getElementById('snakeHighScore');
         if (highScoreEl) highScoreEl.textContent = snakeHighScore;
     }
+
+// 👇 新增：贪吃蛇结算奖励
+if (snakeScore >= 200) {
+    dispatchFunds += 200000;
+    if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+    if (typeof saveGameState === 'function') saveGameState();
+    if (typeof triggerGravesAltMessage === 'function') {
+        triggerGravesAltMessage(`数据吞噬得分 ${snakeScore}。干得不错，Darlin'。$200,000 奖励已经打入你的黑色行动资金。`);
+    }
+}
     
     const finalScoreEl = document.getElementById('snakeFinalScore');
     const commentEl = document.getElementById('snakeComment');
