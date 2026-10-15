@@ -7530,29 +7530,63 @@ function renderTradingUI() {
 function buyAsset(index) {
     if (tradingGameOver) return;
     const asset = tradingCurrentAssets[index];
-    if (tradingCash < asset.currentPrice) {
-        addTradingLog(`资金不足，无法买入 ${asset.name}。`);
+
+    // 弹出输入框，让玩家自己输入想买多少手
+    const input = prompt(`买入 ${asset.name}\n当前价格：$${asset.currentPrice.toLocaleString('en-US')}/手\n可用现金：$${tradingCash.toLocaleString('en-US')}\n\n请输入想买入的手数（正整数）：`, "1");
+    
+    if (input === null) return; // 用户点了取消
+
+    const qty = parseInt(input);
+    if (isNaN(qty) || qty <= 0) {
+        addTradingLog(`买入失败：请输入有效的正整数。`);
         return;
     }
-    tradingCash -= asset.currentPrice;
-    asset.holdings += 1;
-    addTradingLog(`买入 1 手 ${asset.name}，花费 $${asset.currentPrice.toLocaleString('en-US')}。`);
-    renderTradingUI();saveGameState();
+
+    const totalCost = asset.currentPrice * qty;
+    if (tradingCash < totalCost) {
+        addTradingLog(`资金不足，无法买入 ${qty} 手 ${asset.name}（需要 $${totalCost.toLocaleString('en-US')}）。`);
+        return;
+    }
+
+    tradingCash -= totalCost;
+    asset.holdings += qty;
+    addTradingLog(`买入 ${qty} 手 ${asset.name}，花费 $${totalCost.toLocaleString('en-US')}。`);
+    renderTradingUI();
+    saveGameState();
 }
 
 function sellAsset(index) {
     if (tradingGameOver) return;
     const asset = tradingCurrentAssets[index];
+
     if (asset.holdings <= 0) {
         addTradingLog(`没有 ${asset.name} 的持仓，无法卖出。`);
         return;
     }
-    asset.holdings -= 1;
-    tradingCash += asset.currentPrice;
-    addTradingLog(`卖出 1 手 ${asset.name}，入账 $${asset.currentPrice.toLocaleString('en-US')}。`);
-    renderTradingUI();saveGameState();
-}
 
+    // 弹出输入框，让玩家自己输入想卖多少手
+    const input = prompt(`卖出 ${asset.name}\n当前价格：$${asset.currentPrice.toLocaleString('en-US')}/手\n当前持仓：${asset.holdings} 手\n\n请输入想卖出的手数（正整数，最多 ${asset.holdings}）：`, "1");
+    
+    if (input === null) return; // 用户点了取消
+
+    let qty = parseInt(input);
+    if (isNaN(qty) || qty <= 0) {
+        addTradingLog(`卖出失败：请输入有效的正整数。`);
+        return;
+    }
+
+    // 不能超过持仓数量
+    if (qty > asset.holdings) {
+        qty = asset.holdings;
+    }
+
+    const totalIncome = asset.currentPrice * qty;
+    asset.holdings -= qty;
+    tradingCash += totalIncome;
+    addTradingLog(`卖出 ${qty} 手 ${asset.name}，入账 $${totalIncome.toLocaleString('en-US')}。`);
+    renderTradingUI();
+    saveGameState();
+}
 function nextTradingDay() {
     if (tradingGameOver) return;
     tradingDay++;
