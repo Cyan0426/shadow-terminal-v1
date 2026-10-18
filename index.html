@@ -14929,7 +14929,7 @@ if (frameCount % Math.floor(Math.max(50, 90 - score / 50)) === 0) {
         }
 
         // 资金奖励
-        let reward = Math.floor(score) * 1000;
+        let reward = Math.floor(score) * 100;
         if (reward > 0 && typeof dispatchFunds !== 'undefined') {
             dispatchFunds += reward;
             if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
