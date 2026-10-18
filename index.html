@@ -4747,6 +4747,94 @@ async function sendVoiceMessageToGraves(text) {
     text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
+/* ================= 暗影突进（跑酷） ================= */
+.sr-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    margin: 0 auto; width: 100%; max-width: 420px;
+    background: radial-gradient(circle at top, #16161c 0%, #060608 100%);
+    z-index: 2147483647;
+    display: none; flex-direction: column; padding: 15px;
+    color: var(--text-primary); font-family: 'Consolas', monospace;
+    overflow: hidden;
+}
+.sr-overlay.active { display: flex; }
+
+.sr-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px; margin-bottom: 10px; flex-shrink: 0;
+}
+.sr-title { font-size: 15px; font-weight: bold; letter-spacing: 2px; color: var(--gold); }
+.sr-close { color: var(--text-secondary); font-size: 20px; cursor: pointer; transition: 0.2s; }
+.sr-close:hover { color: #e03e3e; }
+
+.sr-score-board {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--text-secondary);
+    margin-bottom: 10px; letter-spacing: 1px;
+}
+.sr-score-board span { color: var(--gold); font-weight: bold; font-size: 16px; }
+
+.sr-canvas-wrapper {
+    flex: 1; display: flex; justify-content: center; align-items: center;
+    background: #0a0a0c; border: 1px solid var(--border-light);
+    border-radius: 8px; overflow: hidden; position: relative;
+    touch-action: none;
+    margin-bottom: 15px;
+}
+#srCanvas { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: contain; 
+    background: #0a0a0c; /* 纯黑底色，凸显像素风格 */
+    image-rendering: pixelated; /* 强制像素化渲染，边缘不模糊 */
+}
+
+/* 底部控制按钮 */
+.sr-controls {
+    display: flex; justify-content: space-between; gap: 15px;
+    flex-shrink: 0; padding-bottom: 10px;
+}
+.sr-ctrl-btn {
+    flex: 1; background: rgba(212,175,55,0.05); border: 1px solid var(--gold-dark);
+    color: var(--gold); padding: 18px 0; border-radius: 8px;
+    font-size: 16px; font-weight: bold; cursor: pointer;
+    transition: all 0.1s; user-select: none; -webkit-user-select: none;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    touch-action: manipulation;
+}
+.sr-ctrl-btn span { font-size: 10px; color: var(--text-muted); }
+.sr-ctrl-btn:active, .sr-ctrl-btn.active {
+    background: var(--gold); color: var(--bg-dark);
+}
+.sr-ctrl-btn:active span, .sr-ctrl-btn.active span {
+    color: rgba(0,0,0,0.5);
+}
+
+/* 结算弹窗 */
+.sr-modal {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    display: none; justify-content: center; align-items: center;
+    padding: 30px; z-index: 100;
+}
+.sr-modal.active { display: flex; }
+.sr-modal-card {
+    background: var(--bg-card); border: 1px solid var(--gold);
+    border-radius: 12px; padding: 25px; text-align: center;
+    width: 100%; max-width: 320px;
+    box-shadow: 0 0 40px rgba(212,175,55,0.2);
+    animation: blindboxAppear 0.4s ease-out;
+}
+.sr-modal-title { font-size: 16px; font-weight: bold; color: #e03e3e; letter-spacing: 2px; margin-bottom: 10px; }
+.sr-modal-rank { font-size: 46px; font-weight: bold; color: var(--gold); margin-bottom: 10px; }
+.sr-modal-desc { font-size: 13px; color: var(--text-primary); line-height: 1.6; margin-bottom: 20px; }
+.sr-btn {
+    background: var(--gold-gradient); color: var(--bg-dark);
+    border: none; border-radius: 6px; padding: 12px; width: 100%;
+    font-size: 14px; font-weight: bold; cursor: pointer;
+}
+
 </style>
 
 <div class="blackbox-overlay" id="blackboxOverlay">
@@ -5479,7 +5567,7 @@ function closeAllOverlays() {
         '.catering-drawer, .calendar-overlay, .trading-overlay, .affection-overlay, ' +
         '.chat-overlay, .album-overlay, .shadow-db-overlay, .recruit-overlay, ' +
         '.blackbox-overlay, .dispatch-overlay, .tactical-overlay, .personnel-modal, ' +
-        '.mine-overlay, .roulette-overlay'
+        '.mine-overlay, .roulette-overlay, .sa-overlay, .sr-overlay'
     );
 
     overlays.forEach(el => {
@@ -5492,7 +5580,6 @@ function closeAllOverlays() {
         hangupCall();
     }
 }
-
 
 // 全局存档函数（安全修复版）
 function saveGameState() {
@@ -10075,6 +10162,7 @@ window.addEventListener('load', function() {
         <div class="app-icon-item" onclick="openMineGame()"><div class="app-icon">💣</div><div class="app-name">暗影扫雷</div></div>
         <div class="app-icon-item" onclick="openRoulette()"><div class="app-icon">🎰</div><div class="app-name">暗影赌局</div></div>
         <div class="app-icon-item" onclick="openShadowAirlift()"><div class="app-icon">✈️</div><div class="app-name">暗影空运</div></div>
+        <div class="app-icon-item" onclick="openShadowRunner()"><div class="app-icon">🏃‍♂️</div><div class="app-name">暗影突进</div></div>
 </div>
 </div>
 
@@ -14468,6 +14556,403 @@ function aiRollDice() {
     }
 })();
 
+</script>
+
+<!-- 暗影突进 · 跑酷 -->
+<div class="sr-overlay" id="srOverlay">
+    <div class="sr-header">
+        <div class="sr-title">暗影突进 · SHADOW RUNNER</div>
+        <div class="sr-close" onclick="closeShadowRunner()">✕</div>
+    </div>
+    
+    <div class="sr-score-board">
+        <div>距离：<span id="srScore">0</span> m</div>
+        <div>最高：<span id="srHighScore">0</span> m</div>
+    </div>
+
+    <div class="sr-canvas-wrapper">
+        <canvas id="srCanvas"></canvas>
+    </div>
+
+    <!-- 电脑/手机通用大按钮 -->
+    <div class="sr-controls">
+        <div class="sr-ctrl-btn" id="srBtnJump">
+            ⬆ 跳跃 <span>(Space / 上键)</span>
+        </div>
+        <div class="sr-ctrl-btn" id="srBtnDown">
+            ⬇ 滑铲 <span>(下键 / 长按)</span>
+        </div>
+    </div>
+
+    <!-- 结算弹窗 -->
+    <div class="sr-modal" id="srModal">
+        <div class="sr-modal-card">
+            <div class="sr-modal-title">行动失败</div>
+            <div class="sr-modal-rank" id="srFinalScore">0 m</div>
+            <div class="sr-modal-desc" id="srModalDesc">格瑞夫斯正在赶来...</div>
+            <button class="sr-btn" onclick="srRestart()">重试突围</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ================= 暗影突进 · 跑酷逻辑（像素版） ================= */
+(function() {
+    let canvas, ctx;
+    let srAnimId = null;
+    let srActive = false;
+
+    // 物理参数
+    const GRAVITY = 0.6;
+    const JUMP_FORCE = -11.5;
+    const GROUND_Y = 200; // 地面线
+    let baseSpeed = 6;
+    let currentSpeed = 6;
+
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('shadowRunnerHighScore')) || 0;
+    let isGameOver = false;
+    let frameCount = 0;
+
+    // 玩家状态
+    let player = {
+        x: 50,
+        y: GROUND_Y - 40, // 身高40
+        width: 24,        // 像素小人宽度
+        height: 40,
+        vy: 0,
+        isJumping: false,
+        isDucking: false,
+        duckHeight: 22
+    };
+
+    let obstacles = [];
+
+    function initCanvas() {
+        canvas = document.getElementById('srCanvas');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d');
+        canvas.width = 380;
+        canvas.height = 250;
+        // 关闭抗锯齿，保持像素风锐利
+        ctx.imageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+    }
+
+    window.openShadowRunner = function() {
+        if (typeof closeAllOverlays === 'function') closeAllOverlays();
+        if (typeof closeAppCenter === 'function') closeAppCenter();
+
+        const overlay = document.getElementById('srOverlay');
+        if (!overlay) return;
+        if (overlay.parentNode !== document.body) document.body.appendChild(overlay);
+        overlay.classList.add('active');
+
+        initCanvas();
+        srActive = true;
+        srRestart();
+    };
+
+    window.closeShadowRunner = function() {
+        srActive = false;
+        isGameOver = true;
+        if (srAnimId) cancelAnimationFrame(srAnimId);
+        const overlay = document.getElementById('srOverlay');
+        if (overlay) overlay.classList.remove('active');
+        document.getElementById('srModal').classList.remove('active');
+    };
+
+    window.srRestart = function() {
+        document.getElementById('srModal').classList.remove('active');
+        score = 0;
+        currentSpeed = baseSpeed;
+        obstacles = [];
+        isGameOver = false;
+        frameCount = 0;
+        player.y = GROUND_Y - player.height;
+        player.vy = 0;
+        player.isJumping = false;
+        player.isDucking = false;
+        document.getElementById('srBtnDown').classList.remove('active');
+        
+        document.getElementById('srHighScore').textContent = highScore;
+        document.getElementById('srScore').textContent = '0';
+        
+        if (srAnimId) cancelAnimationFrame(srAnimId);
+        gameLoop();
+    };
+
+    // ================= 操作控制 =================
+    function jump() {
+        if (isGameOver || player.isJumping || player.isDucking) return;
+        player.vy = JUMP_FORCE;
+        player.isJumping = true;
+    }
+
+    function duckStart() {
+        if (isGameOver || player.isJumping) return;
+        player.isDucking = true;
+        document.getElementById('srBtnDown').classList.add('active');
+    }
+
+    function duckEnd() {
+        player.isDucking = false;
+        document.getElementById('srBtnDown').classList.remove('active');
+    }
+
+    // 键盘支持
+    document.addEventListener('keydown', (e) => {
+        if (!srActive) return;
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+            e.preventDefault(); jump();
+        }
+        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+            e.preventDefault(); duckStart();
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (!srActive) return;
+        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+            duckEnd();
+        }
+    });
+
+    // 鼠标与触屏支持
+    const btnJump = document.getElementById('srBtnJump');
+    const btnDown = document.getElementById('srBtnDown');
+
+    btnJump.addEventListener('mousedown', jump);
+    btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); }, { passive: false });
+
+    btnDown.addEventListener('mousedown', duckStart);
+    btnDown.addEventListener('touchstart', (e) => { e.preventDefault(); duckStart(); }, { passive: false });
+    
+    window.addEventListener('mouseup', duckEnd);
+    btnDown.addEventListener('touchend', (e) => { e.preventDefault(); duckEnd(); });
+    btnDown.addEventListener('touchcancel', (e) => { e.preventDefault(); duckEnd(); });
+
+    // ================= 游戏主循环 =================
+    function gameLoop() {
+        if (!srActive) return;
+
+        if (!isGameOver) {
+            update();
+            draw();
+            frameCount++;
+            srAnimId = requestAnimationFrame(gameLoop);
+        }
+    }
+
+    function update() {
+        // 1. 跳跃物理
+        if (player.isJumping) {
+            player.y += player.vy;
+            player.vy += GRAVITY;
+            if (player.y >= GROUND_Y - player.height) {
+                player.y = GROUND_Y - player.height;
+                player.isJumping = false;
+                player.vy = 0;
+            }
+        }
+
+        // 2. 速度与得分
+        score += 0.1;
+        if (frameCount % 100 === 0) currentSpeed += 0.1;
+        document.getElementById('srScore').textContent = Math.floor(score);
+
+       // 3. 生成障碍物
+if (frameCount % Math.floor(Math.max(50, 90 - score / 50)) === 0) {
+    let isFlying = Math.random() > 0.5; // 50% 出空中激光网，50% 出地面拒马
+
+    if (isFlying) {
+        // 空中激光网：从高空一直挂下来，挡住所有跳跃路线
+        let width = 24;
+        let height = 135; // 极高，直接封死上方空间
+        let y = GROUND_Y - 165; // 顶部在极高处，底部距离地面 35px
+        // （玩家滑铲高度22能钻过去，站立40会撞，起跳必死）
+        obstacles.push({
+            x: canvas.width, y: y, width: width, height: height, type: 'drone'
+        });
+    } else {
+        // 地面拒马：必须跳过去
+        let width = 20 + Math.random() * 15;
+        let height = 30 + Math.random() * 10;
+        let y = GROUND_Y - height;
+        obstacles.push({
+            x: canvas.width, y: y, width: width, height: height, type: 'mine'
+        });
+    }
+}
+
+        // 4. 障碍物移动与碰撞
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.x -= currentSpeed;
+
+            // 玩家碰撞箱（略微收缩，提升手感）
+            let pY = player.isDucking ? GROUND_Y - player.duckHeight : player.y;
+            let pH = player.isDucking ? player.duckHeight : player.height;
+            
+            let pRect = { x: player.x + 6, y: pY + 2, w: player.width - 10, h: pH - 4 };
+            let oRect = { x: obs.x + 2, y: obs.y + 2, w: obs.width - 4, h: obs.height - 4 };
+
+            // AABB 碰撞
+            if (pRect.x < oRect.x + oRect.w &&
+                pRect.x + pRect.w > oRect.x &&
+                pRect.y < oRect.y + oRect.h &&
+                pRect.y + pRect.h > oRect.y) {
+                gameOver();
+            }
+
+            if (obs.x + obs.width < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    // ================= 像素风绘制 =================
+    function draw() {
+        // 纯黑背景
+        ctx.fillStyle = '#0a0a0c';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 画地面线（虚线）
+        ctx.fillStyle = '#2e3540';
+        let offset = (frameCount * currentSpeed) % 20;
+        for (let i = -20; i < canvas.width; i += 20) {
+            ctx.fillRect(i + offset, GROUND_Y + 2, 10, 2);
+        }
+        // 画地面的随机像素小石头
+        ctx.fillStyle = '#1f232b';
+        for (let i = 0; i < 10; i++) {
+            let rx = (i * 45 + offset) % canvas.width;
+            ctx.fillRect(rx, GROUND_Y + 6, 3, 2);
+        }
+
+        // 绘制玩家
+        drawPixelPlayer();
+
+        // 绘制障碍物
+        obstacles.forEach(obs => {
+            if (obs.type === 'mine') {
+                drawPixelMine(obs.x, obs.y, obs.width, obs.height);
+            } else {
+                drawPixelDrone(obs.x, obs.y, obs.width, obs.height);
+            }
+        });
+    }
+
+    // 绘制像素特工
+    function drawPixelPlayer() {
+        const baseX = player.x;
+        const baseY = player.isDucking ? GROUND_Y - player.duckHeight : player.y;
+        
+        ctx.fillStyle = '#d4af37'; // 暗影金配色
+
+        if (player.isDucking) {
+            // 滑铲姿态
+            ctx.fillRect(baseX - 5, baseY + 8, 34, 14); // 身体
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(baseX + 24, baseY + 10, 5, 5); // 头部/面罩
+            // 腿部特效（滑铲线）
+            ctx.fillStyle = '#2e3540';
+            ctx.fillRect(baseX - 15, baseY + 20, 10, 2);
+        } else {
+            // 站立/跳跃姿态
+            // 头
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(baseX + 10, baseY, 12, 10);
+            // 眼睛
+            ctx.fillStyle = '#0a0a0c';
+            ctx.fillRect(baseX + 17, baseY + 3, 3, 3);
+            
+            // 身体
+            ctx.fillStyle = '#d4af37';
+            ctx.fillRect(baseX + 8, baseY + 10, 14, 15);
+            
+            // 腿部动画
+            if (player.isJumping) {
+                // 跳跃时腿收缩
+                ctx.fillStyle = '#d4af37';
+                ctx.fillRect(baseX + 6, baseY + 25, 8, 10);
+                ctx.fillRect(baseX + 16, baseY + 25, 8, 10);
+            } else {
+                // 奔跑时双腿交替
+                let legFrame = Math.floor(frameCount / 5) % 2;
+                ctx.fillStyle = '#d4af37';
+                if (legFrame === 0) {
+                    ctx.fillRect(baseX + 6, baseY + 25, 7, 15);  // 前腿伸出
+                    ctx.fillRect(baseX + 15, baseY + 25, 7, 8);  // 后腿收起
+                } else {
+                    ctx.fillRect(baseX + 6, baseY + 25, 7, 8);
+                    ctx.fillRect(baseX + 15, baseY + 25, 7, 15);
+                }
+            }
+        }
+    }
+
+    // 绘制像素地雷/拒马
+    function drawPixelMine(x, y, w, h) {
+        ctx.fillStyle = '#e03e3e'; // 危险红
+        // 画两个交叉的拒马
+        for (let i = 0; i < w; i+=4) {
+            ctx.fillRect(x + i, y + h - 4, 4, 4);
+            if(i % 8 === 0) ctx.fillRect(x + i, y, 4, h - 4);
+        }
+        // 警示灯
+        ctx.fillStyle = (Math.floor(frameCount / 10) % 2 === 0) ? '#fff' : '#e03e3e';
+        ctx.fillRect(x + w/2 - 2, y - 4, 4, 4);
+    }
+
+    // 绘制像素无人机
+    function drawPixelDrone(x, y, w, h) {
+        // 旋翼横杆
+        ctx.fillStyle = '#9b59b6';
+        ctx.fillRect(x - 6, y, w + 12, 3);
+        // 机身
+        ctx.fillStyle = '#8e44ad';
+        ctx.fillRect(x + 4, y + 4, w - 8, h - 6);
+        // 红外探测仪（闪烁）
+        ctx.fillStyle = (Math.floor(frameCount / 15) % 2 === 0) ? '#e03e3e' : '#000';
+        ctx.fillRect(x + w/2 - 2, y + h - 6, 4, 4);
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        
+        if (score > highScore) {
+            highScore = Math.floor(score);
+            localStorage.setItem('shadowRunnerHighScore', highScore);
+            document.getElementById('srHighScore').textContent = highScore;
+        }
+
+        // 资金奖励
+        let reward = Math.floor(score) * 1000;
+        if (reward > 0 && typeof dispatchFunds !== 'undefined') {
+            dispatchFunds += reward;
+            if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+        }
+        if (typeof saveGameState === 'function') saveGameState();
+
+        let comment = "";
+        if (score < 100) comment = "就这点反应速度？你在战场上活不过三秒。";
+        else if (score < 300) comment = "勉强及格的体能，看来平时没少跑路。";
+        else comment = "干得漂亮，这身手有资格进暗影了。奖金已发放。";
+
+        document.getElementById('srFinalScore').textContent = `${Math.floor(score)} m`;
+        document.getElementById('srModalDesc').innerHTML = `${comment}<br><br><span style="color:var(--gold); font-size:12px;">行动资金: +$${reward.toLocaleString('en-US')}</span>`;
+        document.getElementById('srModal').classList.add('active');
+
+        // 触发小号吐槽
+        if (typeof triggerGravesAltMessage === 'function') {
+            setTimeout(() => {
+                triggerGravesAltMessage(`Darlin'，你的跑酷成绩是 ${Math.floor(score)} 米。${comment}`);
+            }, 2500);
+        }
+    }
+})();
 </script>
 
 </body>
