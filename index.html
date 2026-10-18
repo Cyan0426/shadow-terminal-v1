@@ -14613,7 +14613,7 @@ function aiRollDice() {
     let highScore = parseInt(localStorage.getItem('shadowRunnerHighScore')) || 0;
     let isGameOver = false;
     let frameCount = 0;
-
+let countdownTimer = 0; // 倒计时（秒）
     // 玩家状态
     let player = {
         x: 50,
@@ -14663,32 +14663,40 @@ function aiRollDice() {
         document.getElementById('srModal').classList.remove('active');
     };
 
-    window.srRestart = function() {
-        document.getElementById('srModal').classList.remove('active');
-        score = 0;
-        currentSpeed = baseSpeed;
-        obstacles = [];
-        isGameOver = false;
-        frameCount = 0;
-        player.y = GROUND_Y - player.height;
-        player.vy = 0;
-        player.isJumping = false;
-        player.isDucking = false;
-        document.getElementById('srBtnDown').classList.remove('active');
-        
-        document.getElementById('srHighScore').textContent = highScore;
-        document.getElementById('srScore').textContent = '0';
-        
-        if (srAnimId) cancelAnimationFrame(srAnimId);
-        gameLoop();
-    };
+   window.srRestart = function() {
+    document.getElementById('srModal').classList.remove('active');
+    score = 0;
+    currentSpeed = 0; // 倒计时期间速度为0
+    countdownTimer = 3.5; // 设置3.5秒倒计时，留点余量给"3,2,1"
+    obstacles = [];
+    isGameOver = false;
+    frameCount = 0;
+    player.y = GROUND_Y - player.height;
+    player.vy = 0;
+    player.isJumping = false;
+    player.isDucking = false;
+    document.getElementById('srBtnDown').classList.remove('active');
+    
+    document.getElementById('srHighScore').textContent = highScore;
+    document.getElementById('srScore').textContent = '0';
+    
+    if (srAnimId) cancelAnimationFrame(srAnimId);
+    gameLoop();
+};
 
     // ================= 操作控制 =================
     function jump() {
-        if (isGameOver || player.isJumping || player.isDucking) return;
-        player.vy = JUMP_FORCE;
-        player.isJumping = true;
+    if (isGameOver) return;
+    // 如果在倒计时中，按跳跃直接取消倒计时
+    if (countdownTimer > 0) {
+        countdownTimer = 0;
+        currentSpeed = baseSpeed;
     }
+    
+    if (player.isJumping || player.isDucking) return;
+    player.vy = JUMP_FORCE;
+    player.isJumping = true;
+}
 
     function duckStart() {
         if (isGameOver || player.isJumping) return;
@@ -14746,21 +14754,33 @@ function aiRollDice() {
     }
 
     function update() {
-        // 1. 跳跃物理
-        if (player.isJumping) {
-            player.y += player.vy;
-            player.vy += GRAVITY;
-            if (player.y >= GROUND_Y - player.height) {
-                player.y = GROUND_Y - player.height;
-                player.isJumping = false;
-                player.vy = 0;
-            }
+    // 跳跃物理
+    if (player.isJumping) {
+        player.y += player.vy;
+        player.vy += GRAVITY;
+        if (player.y >= GROUND_Y - player.height) {
+            player.y = GROUND_Y - player.height;
+            player.isJumping = false;
+            player.vy = 0;
         }
+    }
 
-        // 2. 速度与得分
-        score += 0.1;
-        if (frameCount % 100 === 0) currentSpeed += 0.1;
-        document.getElementById('srScore').textContent = Math.floor(score);
+    // --- 倒计时处理 ---
+    if (countdownTimer > 0) {
+        countdownTimer -= 1 / 60; // 假设60帧，每帧减0.016秒
+        if (countdownTimer <= 0) {
+            countdownTimer = 0;
+            currentSpeed = baseSpeed; // 倒计时结束，游戏正式开始
+        }
+        return; // 倒计时期间，跳过下面的分数计算和障碍物生成
+    }
+
+    // 2. 速度与得分
+    score += 0.1;
+    if (frameCount % 100 === 0) currentSpeed += 0.1; // 缓慢加速
+    document.getElementById('srScore').textContent = Math.floor(score);
+
+    // 3. 生成障碍物 ... (下面保持你现有的代码不变)
 
        // 3. 生成障碍物
 if (frameCount % Math.floor(Math.max(50, 90 - score / 50)) === 0) {
@@ -14917,7 +14937,22 @@ if (frameCount % Math.floor(Math.max(50, 90 - score / 50)) === 0) {
         // 红外探测仪（闪烁）
         ctx.fillStyle = (Math.floor(frameCount / 15) % 2 === 0) ? '#e03e3e' : '#000';
         ctx.fillRect(x + w/2 - 2, y + h - 6, 4, 4);
+        // 绘制倒计时
+    if (countdownTimer > 0) {
+        ctx.fillStyle = '#d4af37';
+        ctx.font = 'bold 60px "Arial Black", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // Math.ceil 向上取整，这样 3.1 秒时显示 4，3.0 秒时显示 3
+        let num = Math.ceil(countdownTimer); 
+        ctx.fillText(num, canvas.width / 2, canvas.height / 2 - 20);
+
+        ctx.font = '14px Consolas, monospace';
+        ctx.fillStyle = '#2e3540';
+        ctx.fillText('SYSTEM READY...', canvas.width / 2, canvas.height / 2 + 40);
     }
+}
+ 
 
     function gameOver() {
         isGameOver = true;
