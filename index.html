@@ -4835,6 +4835,128 @@ async function sendVoiceMessageToGraves(text) {
     font-size: 14px; font-weight: bold; cursor: pointer;
 }
 
+/* ================= 暗影加密电台 ================= */
+.music-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    margin: 0 auto; width: 100%; max-width: 420px;
+    background: #060608; z-index: 2147483647;
+    display: none; flex-direction: column;
+    color: var(--text-primary); font-family: 'Consolas', monospace;
+    overflow: hidden;
+}
+.music-overlay.active { display: flex; }
+
+/* 动态背景 */
+.music-bg {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at center, rgba(212,175,55,0.1) 0%, #060608 70%);
+    z-index: -1;
+    transition: background 1s ease;
+}
+
+.music-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px; border-bottom: 1px solid var(--border-color);
+    background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
+}
+.music-title { font-size: 15px; font-weight: bold; letter-spacing: 2px; color: var(--gold); }
+.music-close { color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+.music-close:hover { color: #e03e3e; }
+
+/* 中间唱片与信息 */
+.music-main {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 20px;
+}
+
+/* 黑胶唱片机 */
+.vinyl-container {
+    position: relative;
+    width: 220px; height: 220px;
+    margin-bottom: 40px;
+}
+.vinyl-disc {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: radial-gradient(circle, #1a1a1a 30%, #0a0a0a 70%, #000 100%);
+    border: 4px solid #111;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(212,175,55,0.1);
+    display: flex; justify-content: center; align-items: center;
+    animation: spinVinyl 10s linear infinite;
+    animation-play-state: paused;
+}
+.vinyl-disc.playing { animation-play-state: running; }
+
+/* 唱片中心的标签 */
+.vinyl-label {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--gold-gradient);
+    display: flex; justify-content: center; align-items: center;
+    border: 2px solid #000;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+.vinyl-label::after {
+    content: ''; width: 10px; height: 10px; background: #000; border-radius: 50%;
+}
+
+/* 悬浮的唱针 */
+.tonearm {
+    position: absolute; top: -10px; right: -20px;
+    width: 100px; height: 20px;
+    background: #333; border-radius: 10px;
+    transform-origin: right center;
+    transform: rotate(-30deg);
+    transition: transform 0.5s ease;
+    border: 1px solid #555;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+}
+.tonearm::after {
+    content: ''; position: absolute; left: 0; top: -5px;
+    width: 30px; height: 30px; background: #222;
+    border-radius: 50%; border: 2px solid #555;
+}
+.tonearm.playing { transform: rotate(5deg); }
+
+@keyframes spinVinyl { 100% { transform: rotate(360deg); } }
+
+/* 歌曲信息 */
+.music-info { text-align: center; margin-bottom: 30px; width: 100%; }
+.music-name { font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 1px; margin-bottom: 8px; }
+.music-artist { font-size: 12px; color: var(--gold); letter-spacing: 2px; }
+
+/* 进度条 */
+.music-progress { width: 100%; display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-muted); margin-bottom: 30px; }
+.bar-bg { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative; }
+.bar-fill { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: var(--gold); border-radius: 2px; transition: width 0.1s; }
+
+/* 控制按钮 */
+.music-controls { display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%; }
+.m-btn {
+    background: none; border: none; color: var(--text-secondary); font-size: 28px;
+    cursor: pointer; transition: all 0.2s;
+}
+.m-btn:hover { color: #fff; }
+.m-btn.play-btn { font-size: 50px; color: var(--gold); text-shadow: 0 0 20px rgba(212,175,55,0.4); }
+.m-btn.play-btn:hover { transform: scale(1.1); color: #fff; }
+
+/* 悬浮迷你播放器 */
+.mini-player {
+    position: fixed; bottom: 90px; left: 20px;
+    background: rgba(12,12,16,0.95); border: 1px solid var(--gold-dim);
+    border-radius: 30px; padding: 8px 16px 8px 8px;
+    display: none; align-items: center; gap: 12px;
+    z-index: 9999; cursor: pointer; backdrop-filter: blur(10px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+    transition: transform 0.2s;
+}
+.mini-player:hover { transform: scale(1.05); border-color: var(--gold); }
+.mini-player.active { display: flex; }
+.mini-disc { width: 30px; height: 30px; border-radius: 50%; background: var(--gold-gradient); border: 1px solid #000; display: flex; justify-content: center; align-items: center; animation: spinVinyl 5s linear infinite; animation-play-state: paused; }
+.mini-disc.playing { animation-play-state: running; }
+.mini-disc::after { content:''; width:4px; height:4px; background:#000; border-radius:50%; }
+.mini-info { display: flex; flex-direction: column; }
+.mini-name { font-size: 12px; color: var(--gold); font-weight: bold; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-status { font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
+
 </style>
 
 <div class="blackbox-overlay" id="blackboxOverlay">
@@ -6355,10 +6477,16 @@ let memoListData = [
 // ================= 18. 独立空间（控制中心）逻辑 =================
 
 // 打开控制中心
-window.openAppCenter = function() {closeAllOverlays();
+window.openAppCenter = function() {
+    closeAllOverlays();
+    // 👇 新增：如果全屏音乐开着，把它收起来，变成左下角悬浮条
+    if (document.getElementById('musicOverlay').classList.contains('active')) {
+        closeMusicPlayer();
+    }
+
     const overlay = document.getElementById('appCenterOverlay');
     if (overlay) {
-        overlay.style.display = 'flex'; // 👈 强行显示
+        overlay.style.display = 'flex';
         overlay.classList.add('active');
     }
 };
@@ -10163,6 +10291,7 @@ window.addEventListener('load', function() {
         <div class="app-icon-item" onclick="openRoulette()"><div class="app-icon">🎰</div><div class="app-name">暗影赌局</div></div>
         <div class="app-icon-item" onclick="openShadowAirlift()"><div class="app-icon">✈️</div><div class="app-name">暗影空运</div></div>
         <div class="app-icon-item" onclick="openShadowRunner()"><div class="app-icon">🏃‍♂️</div><div class="app-name">暗影突进</div></div>
+        <div class="app-icon-item" onclick="openMusicPlayer()"><div class="app-icon">📻</div><div class="app-name">加密电台</div></div>
 </div>
 </div>
 
@@ -14987,6 +15116,215 @@ if (frameCount % Math.floor(Math.max(50, 90 - score / 50)) === 0) {
             }, 2500);
         }
     }
+})();
+</script>
+
+<!-- 全屏电台界面 -->
+<div class="music-overlay" id="musicOverlay">
+    <div class="music-bg" id="musicBg"></div>
+    <div class="music-header">
+        <div class="music-title">暗影加密电台 · SHADOW RADIO</div>
+        <div class="music-close" onclick="closeMusicPlayer()">✕</div>
+    </div>
+
+    <div class="music-main">
+        <!-- 唱片机 -->
+        <div class="vinyl-container">
+            <div class="vinyl-disc" id="vinylDisc">
+                <div class="vinyl-label"></div>
+            </div>
+            <div class="tonearm" id="tonearm"></div>
+        </div>
+
+        <!-- 信息 -->
+        <div class="music-info">
+            <div class="music-name" id="mTrackName">未知曲目</div>
+            <div class="music-artist" id="mTrackArtist">暗影终端 · 私人收藏</div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="music-progress">
+            <span id="mCurrentTime">00:00</span>
+            <div class="bar-bg" id="mBarBg">
+                <div class="bar-fill" id="mBarFill"></div>
+            </div>
+            <span id="mTotalTime">00:00</span>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="music-controls">
+            <button class="m-btn" onclick="prevTrack()">⏮</button>
+            <button class="m-btn play-btn" id="mPlayBtn" onclick="toggleMusicPlay()">▶</button>
+            <button class="m-btn" onclick="nextTrack()">⏭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 迷你悬浮播放器 -->
+<div class="mini-player" id="miniPlayer" onclick="openMusicPlayer()">
+    <div class="mini-disc" id="miniDisc"></div>
+    <div class="mini-info">
+        <div class="mini-name" id="miniName">正在播放</div>
+        <div class="mini-status" id="miniStatus">后台运行中 · 点击展开</div>
+    </div>
+</div>
+
+<!-- 隐藏的核心 Audio 标签 -->
+<audio id="shadowAudio"></audio>
+<script>
+/* ================= 暗影加密电台核心逻辑 ================= */
+(function() {
+    // 👇 在这里配置你的 6 首音乐信息 👇
+    // 请确保文件放在了正确的位置（比如和 index.html 同级，或者 music 文件夹里）
+    const playlist = [
+        { name: "肖邦", artist: "肖邦古典", src: "chopin.mp3" },
+        { name: "贝多芬", artist: "贝多芬古典", src: "beethoven.mp3" },
+        { name: "DARK", artist: "激烈", src: "dark.mp3" },
+        { name: "维瓦尔第spring", artist: "维瓦尔第 (古典)", src: "vivaldi_spring.mp3" },
+        { name: "Soft", artist: "舒缓", src: "soft.mp3" },
+        { name: "relax", artist: "轻松", src: "relax.mp3" },
+        { name: "Dark Hanger", artist: "Dicemare", src: "GRAVES.mp3" },
+        { name: "The Ledger", artist: "Dicemare", src: "SHADOW.mp3" },
+        { name: "CheckList", artist: "Phillip Graves,Cyan", src: "111cyan.mp3" }
+  ];
+
+    let currentIndex = 0;
+    let isPlaying = false;
+    let audio = document.getElementById('shadowAudio');
+
+    // 初始化事件监听
+    function initAudio() {
+        // 当歌曲播放完毕时自动下一首
+        audio.addEventListener('ended', nextTrack);
+        
+        // 更新时间进度条
+        audio.addEventListener('timeupdate', () => {
+            if (!audio.duration) return;
+            const current = audio.currentTime;
+            const total = audio.duration;
+            
+            document.getElementById('mCurrentTime').textContent = formatTime(current);
+            document.getElementById('mTotalTime').textContent = formatTime(total);
+            
+            const percent = (current / total) * 100;
+            document.getElementById('mBarFill').style.width = `${percent}%`;
+        });
+    }
+
+    function formatTime(sec) {
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(Math.floor(sec % 60)).padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    // 加载歌曲
+    function loadTrack(index) {
+        if (index < 0 || index >= playlist.length) return;
+        currentIndex = index;
+        
+        const track = playlist[index];
+        audio.src = track.src;
+        
+        // 更新 UI
+        document.getElementById('mTrackName').textContent = track.name;
+        document.getElementById('mTrackArtist').textContent = track.artist;
+        document.getElementById('miniName').textContent = track.name;
+        
+        // 如果当前在播放状态，切歌后自动继续播
+        if (isPlaying) {
+            audio.play().catch(e => console.log('播放失败，请检查文件路径', e));
+        }
+    }
+
+    // 播放/暂停控制
+    window.toggleMusicPlay = function() {
+        if (!audio.src) loadTrack(0); // 第一次点击先加载第一首
+
+        if (isPlaying) {
+            audio.pause();
+        } else {
+            audio.play().catch(e => {
+                alert("无法播放，请检查 mp3 文件路径是否配置正确！");
+            });
+        }
+    };
+
+    // 监听播放状态变化 (更新UI)
+    audio.addEventListener('play', () => {
+        isPlaying = true;
+        document.getElementById('mPlayBtn').textContent = '⏸';
+        document.getElementById('vinylDisc').classList.add('playing');
+        document.getElementById('tonearm').classList.add('playing');
+        document.getElementById('miniDisc').classList.add('playing');
+        document.getElementById('miniStatus').textContent = '后台播放中...';
+    });
+
+    audio.addEventListener('pause', () => {
+        isPlaying = false;
+        document.getElementById('mPlayBtn').textContent = '▶';
+        document.getElementById('vinylDisc').classList.remove('playing');
+        document.getElementById('tonearm').classList.remove('playing');
+        document.getElementById('miniDisc').classList.remove('playing');
+        document.getElementById('miniStatus').textContent = '已暂停';
+    });
+
+    // 上一首/下一首
+    window.nextTrack = function() {
+        currentIndex = (currentIndex + 1) % playlist.length;
+        loadTrack(currentIndex);
+    };
+
+    window.prevTrack = function() {
+        currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+        loadTrack(currentIndex);
+    };
+
+    // 进度条点击跳转
+    document.getElementById('mBarBg').addEventListener('click', function(e) {
+        if (!audio.duration) return;
+        const rect = this.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = percent * audio.duration;
+    });
+
+    // 打开/关闭全屏播放器
+    window.openMusicPlayer = function() {
+        if (typeof closeAllOverlays === 'function') closeAllOverlays();
+        if (typeof closeAppCenter === 'function') closeAppCenter();
+
+        const overlay = document.getElementById('musicOverlay');
+        if (!overlay) return;
+        if (overlay.parentNode !== document.body) document.body.appendChild(overlay);
+        
+        // 如果首次打开，加载第一首（但不自动播放，等用户点）
+        if (!audio.src) loadTrack(0);
+
+        overlay.classList.add('active');
+        document.getElementById('miniPlayer').classList.remove('active'); // 隐藏迷你条
+    };
+
+    window.closeMusicPlayer = function() {
+        const overlay = document.getElementById('musicOverlay');
+        if (overlay) overlay.classList.remove('active');
+        
+        // 核心逻辑：退出界面时，如果音乐正在播放，显示迷你悬浮条
+        if (isPlaying) {
+            document.getElementById('miniPlayer').classList.add('active');
+        }
+    };
+
+    // 初始化
+    initAudio();
+
+    // 处理切歌防报错（必须在用户点击时初始化）
+    document.addEventListener('click', function initAudioCtxOnce() {
+        if (audio && !audio.src) {
+            // 预加载但不播
+            loadTrack(0);
+        }
+        document.removeEventListener('click', initAudioCtxOnce);
+    });
+
 })();
 </script>
 
