@@ -4899,24 +4899,59 @@ async function sendVoiceMessageToGraves(text) {
 }
 
 /* 悬浮的唱针 */
+/* 悬浮的唱针 */
+/* 唱针的底座和默认状态（高高抬起悬空） */
 .tonearm {
-    position: absolute; top: -10px; right: -20px;
-    width: 100px; height: 20px;
-    background: #333; border-radius: 10px;
+    position: absolute; 
+    top: 0px; 
+    right: -20px;
+    width: 100px; 
+    height: 16px;
+    background: linear-gradient(90deg, #888 0%, #444 100%);
+    border-radius: 8px;
+    /* 转轴在最右侧 */
     transform-origin: right center;
-    transform: rotate(-30deg);
-    transition: transform 0.5s ease;
-    border: 1px solid #555;
-    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+    /* 👇 默认（无 playing 类时，即暂停状态）：逆时针转，高高抬起 */
+    transform: rotate(-65deg); 
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    border: 1px solid #222;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+    z-index: 10;
 }
-.tonearm::after {
-    content: ''; position: absolute; left: 0; top: -5px;
-    width: 30px; height: 30px; background: #222;
-    border-radius: 50%; border: 2px solid #555;
-}
-.tonearm.playing { transform: rotate(5deg); }
 
-@keyframes spinVinyl { 100% { transform: rotate(360deg); } }
+/* 播放状态：落针搭在唱片上 */
+.tonearm.playing { 
+    /* 👇 播放时，顺时针转，搭在唱片上 */
+    transform: rotate(15deg); 
+}
+
+/* 唱针的转轴圆盘（右侧） */
+.tonearm::after {
+    content: ''; 
+    position: absolute; 
+    right: -8px; 
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px; 
+    height: 32px; 
+    background: radial-gradient(circle, #555 0%, #111 100%);
+    border-radius: 50%; 
+    border: 2px solid #333;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.8);
+}
+
+/* 唱针的针头（左侧） */
+.tonearm::before {
+    content: ''; 
+    position: absolute; 
+    left: -4px; 
+    top: 2px;
+    width: 12px; 
+    height: 12px; 
+    background: var(--gold); /* 金色针头 */
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(212,175,55,0.5);
+}@keyframes spinVinyl { 100% { transform: rotate(360deg); } }
 
 /* 歌曲信息 */
 .music-info { text-align: center; margin-bottom: 30px; width: 100%; }
@@ -4956,6 +4991,83 @@ async function sendVoiceMessageToGraves(text) {
 .mini-info { display: flex; flex-direction: column; }
 .mini-name { font-size: 12px; color: var(--gold); font-weight: bold; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-status { font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
+
+/* ================= 暗影极速（跑酷） ================= */
+.rush-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    margin: 0 auto; width: 100%; max-width: 420px;
+    background: #060608; z-index: 2147483647;
+    display: none; flex-direction: column; padding: 15px;
+    color: var(--text-primary); font-family: 'Consolas', monospace;
+    overflow: hidden;
+}
+.rush-overlay.active { display: flex; }
+
+.rush-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px; margin-bottom: 10px; flex-shrink: 0;
+}
+.rush-title { font-size: 15px; font-weight: bold; letter-spacing: 2px; color: var(--gold); }
+.rush-close { color: var(--text-secondary); font-size: 20px; cursor: pointer; transition: 0.2s; }
+.rush-close:hover { color: #e03e3e; }
+
+.rush-score-board {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--text-secondary);
+    margin-bottom: 10px; letter-spacing: 1px;
+}
+.rush-score-board span { color: var(--gold); font-weight: bold; font-size: 16px; }
+
+.rush-canvas-wrapper {
+    flex: 1; display: flex; justify-content: center; align-items: center;
+    background: #0a0a0c; border: 1px solid var(--border-light);
+    border-radius: 8px; overflow: hidden; position: relative;
+    touch-action: none;
+    margin-bottom: 15px;
+}
+#rushCanvas { width: 100%; height: 100%; display: block; }
+
+/* 底部控制按钮 */
+.rush-controls {
+    display: flex; justify-content: space-between; gap: 15px;
+    flex-shrink: 0; padding-bottom: 10px;
+}
+.rush-ctrl-btn {
+    flex: 1; background: rgba(212,175,55,0.05); border: 1px solid var(--gold-dark);
+    color: var(--gold); padding: 18px 0; border-radius: 8px;
+    font-size: 24px; font-weight: bold; cursor: pointer;
+    transition: all 0.1s; user-select: none; -webkit-user-select: none;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    touch-action: manipulation;
+}
+.rush-ctrl-btn span { font-size: 10px; color: var(--text-muted); }
+.rush-ctrl-btn:active { background: var(--gold); color: var(--bg-dark); transform: scale(0.95); }
+
+/* 结算弹窗 */
+.rush-modal {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    display: none; justify-content: center; align-items: center;
+    padding: 30px; z-index: 100;
+}
+.rush-modal.active { display: flex; }
+.rush-modal-card {
+    background: var(--bg-card); border: 1px solid var(--gold);
+    border-radius: 12px; padding: 25px; text-align: center;
+    width: 100%; max-width: 320px;
+    box-shadow: 0 0 40px rgba(212,175,55,0.2);
+    animation: blindboxAppear 0.4s ease-out;
+}
+.rush-modal-title { font-size: 16px; font-weight: bold; color: #e03e3e; letter-spacing: 2px; margin-bottom: 10px; }
+.rush-modal-rank { font-size: 46px; font-weight: bold; color: var(--gold); margin-bottom: 10px; }
+.rush-modal-desc { font-size: 13px; color: var(--text-primary); line-height: 1.6; margin-bottom: 20px; }
+.rush-btn {
+    background: var(--gold-gradient); color: var(--bg-dark);
+    border: none; border-radius: 6px; padding: 12px; width: 100%;
+    font-size: 14px; font-weight: bold; cursor: pointer;
+}
+
 
 </style>
 
@@ -5689,7 +5801,7 @@ function closeAllOverlays() {
         '.catering-drawer, .calendar-overlay, .trading-overlay, .affection-overlay, ' +
         '.chat-overlay, .album-overlay, .shadow-db-overlay, .recruit-overlay, ' +
         '.blackbox-overlay, .dispatch-overlay, .tactical-overlay, .personnel-modal, ' +
-        '.mine-overlay, .roulette-overlay, .sa-overlay, .sr-overlay'
+        '.mine-overlay, .roulette-overlay, .sa-overlay, .sr-overlay, .music-overlay, .rush-overlay'
     );
 
     overlays.forEach(el => {
@@ -10292,6 +10404,7 @@ window.addEventListener('load', function() {
         <div class="app-icon-item" onclick="openShadowAirlift()"><div class="app-icon">✈️</div><div class="app-name">暗影空运</div></div>
         <div class="app-icon-item" onclick="openShadowRunner()"><div class="app-icon">🏃‍♂️</div><div class="app-name">暗影突进</div></div>
         <div class="app-icon-item" onclick="openMusicPlayer()"><div class="app-icon">📻</div><div class="app-name">加密电台</div></div>
+        <div class="app-icon-item" onclick="openShadowRush()"><div class="app-icon">🏎️</div><div class="app-name">暗影极速</div></div>
 </div>
 </div>
 
@@ -15250,23 +15363,27 @@ if (frameCount % Math.floor(Math.max(50, 90 - score / 50)) === 0) {
     };
 
     // 监听播放状态变化 (更新UI)
-    audio.addEventListener('play', () => {
-        isPlaying = true;
-        document.getElementById('mPlayBtn').textContent = '⏸';
-        document.getElementById('vinylDisc').classList.add('playing');
-        document.getElementById('tonearm').classList.add('playing');
-        document.getElementById('miniDisc').classList.add('playing');
-        document.getElementById('miniStatus').textContent = '后台播放中...';
-    });
+   // 监听播放事件（点击播放时，唱针落下）
+audio.addEventListener('play', () => {
+    isPlaying = true;
+    document.getElementById('mPlayBtn').textContent = '⏸';
+    document.getElementById('vinylDisc').classList.add('playing');
+    // 👇 关键：播放时，给唱针加上 playing 类
+    document.getElementById('tonearm').classList.add('playing'); 
+    document.getElementById('miniDisc').classList.add('playing');
+    document.getElementById('miniStatus').textContent = '后台播放中...';
+});
 
-    audio.addEventListener('pause', () => {
-        isPlaying = false;
-        document.getElementById('mPlayBtn').textContent = '▶';
-        document.getElementById('vinylDisc').classList.remove('playing');
-        document.getElementById('tonearm').classList.remove('playing');
-        document.getElementById('miniDisc').classList.remove('playing');
-        document.getElementById('miniStatus').textContent = '已暂停';
-    });
+// 监听暂停事件（点击暂停时，唱针抬起）
+audio.addEventListener('pause', () => {
+    isPlaying = false;
+    document.getElementById('mPlayBtn').textContent = '▶';
+    document.getElementById('vinylDisc').classList.remove('playing');
+    // 👇 关键：暂停时，移除唱针的 playing 类
+    document.getElementById('tonearm').classList.remove('playing'); 
+    document.getElementById('miniDisc').classList.remove('playing');
+    document.getElementById('miniStatus').textContent = '已暂停';
+});
 
     // 上一首/下一首
     window.nextTrack = function() {
@@ -15327,6 +15444,392 @@ if (frameCount % Math.floor(Math.max(50, 90 - score / 50)) === 0) {
 
 })();
 </script>
+<script>
+
+/* ================= 暗影极速 · 纵向跑酷逻辑 ================= */
+(function() {
+    let canvas, ctx;
+    let rushAnimId = null;
+    let rushActive = false;
+
+    // 游戏参数
+    const LANE_COUNT = 3;
+    const ROAD_WIDTH = 240; // 路面宽度
+    const LANE_WIDTH = ROAD_WIDTH / LANE_COUNT;
+    let baseSpeed = 6;
+    let currentSpeed = 6;
+
+    // 状态
+    let score = 0;
+    let coinsCollected = 0;
+    let highScore = parseInt(localStorage.getItem('shadowRushHighScore')) || 0;
+    let isGameOver = false;
+    let frameCount = 0;
+    let spawnTimer = 0;
+
+    // 玩家（小车）
+    let player = {
+        lane: 1, // 0, 1, 2
+        x: 0,    // 动态计算
+        y: 0,    // 底部
+        width: 34,
+        height: 60,
+        targetX: 0
+    };
+
+    // 实体
+    let obstacles = [];
+    let coins = [];
+
+    function initCanvas() {
+        canvas = document.getElementById('rushCanvas');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d');
+        canvas.width = 380;
+        canvas.height = 500;
+        
+        // 计算初始玩家位置
+        player.y = canvas.height - 90;
+        player.x = (canvas.width / 2) + (player.lane - 1) * LANE_WIDTH;
+        player.targetX = player.x;
+    }
+
+    window.openShadowRush = function() {
+        if (typeof closeAllOverlays === 'function') closeAllOverlays();
+        if (typeof closeAppCenter === 'function') closeAppCenter();
+
+        const overlay = document.getElementById('rushOverlay');
+        if (!overlay) return;
+        if (overlay.parentNode !== document.body) document.body.appendChild(overlay);
+        overlay.classList.add('active');
+
+        initCanvas();
+        rushActive = true;
+        rushRestart();
+    };
+
+    window.closeShadowRush = function() {
+        rushActive = false;
+        isGameOver = true;
+        if (rushAnimId) cancelAnimationFrame(rushAnimId);
+        const overlay = document.getElementById('rushOverlay');
+        if (overlay) overlay.classList.remove('active');
+        document.getElementById('rushModal').classList.remove('active');
+    };
+
+    window.rushRestart = function() {
+        document.getElementById('rushModal').classList.remove('active');
+        score = 0;
+        coinsCollected = 0;
+        currentSpeed = baseSpeed;
+        obstacles = [];
+        coins = [];
+        isGameOver = false;
+        frameCount = 0;
+        spawnTimer = 0;
+        player.lane = 1;
+        player.x = (canvas.width / 2);
+        player.targetX = player.x;
+        
+        document.getElementById('rushHighScore').textContent = highScore;
+        document.getElementById('rushScore').textContent = '0';
+        document.getElementById('rushCoins').textContent = '0';
+        
+        if (rushAnimId) cancelAnimationFrame(rushAnimId);
+        gameLoop();
+    };
+
+    // ================= 操作控制 =================
+    window.rushMove = function(dir) {
+        if (isGameOver) return;
+        if (dir === 'left' && player.lane > 0) {
+            player.lane--;
+        } else if (dir === 'right' && player.lane < LANE_COUNT - 1) {
+            player.lane++;
+        }
+        // 计算目标 X 坐标（居中）
+        player.targetX = (canvas.width / 2) + (player.lane - 1) * LANE_WIDTH;
+    };
+
+    // 键盘支持
+    document.addEventListener('keydown', (e) => {
+        if (!rushActive) return;
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            e.preventDefault(); rushMove('left');
+        }
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            e.preventDefault(); rushMove('right');
+        }
+    });
+
+    // ================= 游戏主循环 =================
+    function gameLoop() {
+        if (!rushActive) return;
+        if (!isGameOver) {
+            update();
+            draw();
+            frameCount++;
+            rushAnimId = requestAnimationFrame(gameLoop);
+        }
+    }
+
+    function update() {
+        // 1. 玩家平滑移动
+        player.x += (player.targetX - player.x) * 0.25;
+
+        // 2. 速度与得分
+        score += 0.1;
+        if (frameCount % 100 === 0) currentSpeed += 0.15;
+        document.getElementById('rushScore').textContent = Math.floor(score);
+
+        // 3. 生成障碍物与金币
+        spawnTimer++;
+        // 随机生成间隔
+        if (spawnTimer > Math.max(30, 60 - score / 100)) {
+            spawnTimer = 0;
+            let spawnLane = Math.floor(Math.random() * LANE_COUNT);
+            
+            // 50% 概率出金币，50% 出障碍
+            if (Math.random() > 0.4) {
+                // 生成障碍（避开中间车道，防止必死局）
+                if (spawnLane === 1) spawnLane = Math.random() > 0.5 ? 0 : 2;
+                obstacles.push({
+                    x: (canvas.width / 2) + (spawnLane - 1) * LANE_WIDTH,
+                    y: -80,
+                    width: 30,
+                    height: 50,
+                    type: 'barrier'
+                });
+            } else {
+                // 生成金币阵列 (1~3个)
+                let count = Math.floor(Math.random() * 3) + 1;
+                for(let i=0; i<count; i++) {
+                    coins.push({
+                        x: (canvas.width / 2) + (spawnLane - 1) * LANE_WIDTH,
+                        y: -50 - (i * 40), // 垂直排列
+                        width: 20,
+                        height: 20
+                    });
+                }
+            }
+        }
+
+        // 4. 移动障碍物并判定碰撞
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.y += currentSpeed;
+
+            // 碰撞箱（稍微缩减一点，提升手感）
+            if (Math.abs(player.x - obs.x) < (player.width + obs.width)/2 - 6 &&
+                Math.abs(player.y - obs.y) < (player.height + obs.height)/2 - 6) {
+                gameOver();
+            }
+
+            if (obs.y > canvas.height) obstacles.splice(i, 1);
+        }
+
+        // 5. 移动金币并判定拾取
+        for (let i = coins.length - 1; i >= 0; i--) {
+            let c = coins[i];
+            c.y += currentSpeed;
+
+            if (Math.abs(player.x - c.x) < (player.width + c.width)/2 &&
+                Math.abs(player.y - c.y) < (player.height + c.height)/2) {
+                coinsCollected++;
+                document.getElementById('rushCoins').textContent = coinsCollected;
+                coins.splice(i, 1);
+            } else if (c.y > canvas.height) {
+                coins.splice(i, 1);
+            }
+        }
+    }
+
+    // ================= 绘制 =================
+    function draw() {
+        // 背景
+        ctx.fillStyle = '#0a0a0c';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 绘制路面
+        const roadLeft = (canvas.width - ROAD_WIDTH) / 2;
+        const roadRight = roadLeft + ROAD_WIDTH;
+        
+        // 路面底色（稍亮一点的黑）
+        ctx.fillStyle = '#121216';
+        ctx.fillRect(roadLeft, 0, ROAD_WIDTH, canvas.height);
+
+        // 画车道分割线（虚线）
+        ctx.strokeStyle = '#2a2a35';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([20, 20]);
+        ctx.lineDashOffset = (frameCount * currentSpeed) % 40;
+        
+        for (let i = 1; i < LANE_COUNT; i++) {
+            let lineX = roadLeft + i * LANE_WIDTH;
+            ctx.beginPath();
+            ctx.moveTo(lineX, 0);
+            ctx.lineTo(lineX, canvas.height);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]); // 恢复实线
+
+        // 路面边缘的金色警戒线
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(roadLeft, 0); ctx.lineTo(roadLeft, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(roadRight, 0); ctx.lineTo(roadRight, canvas.height); ctx.stroke();
+
+        // 绘制障碍物（红色激光路障）
+        obstacles.forEach(obs => {
+            ctx.fillStyle = '#e03e3e';
+            ctx.fillRect(obs.x - obs.width/2, obs.y - obs.height/2, obs.width, obs.height);
+            // 警示条纹
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(obs.x - obs.width/2 + 5, obs.y - obs.height/2 + 10, obs.width - 10, 5);
+            ctx.fillRect(obs.x - obs.width/2 + 5, obs.y - obs.height/2 + 25, obs.width - 10, 5);
+        });
+
+        // 绘制金币（金色发光方块）
+        coins.forEach(c => {
+            ctx.fillStyle = '#d4af37';
+            ctx.shadowColor = '#d4af37';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.width/2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0; // 重置
+            // 金币中间的符号
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$', c.x, c.y + 1);
+        });
+
+        // 绘制玩家（黑色装甲小车）
+        drawPlayer();
+    }
+
+    function drawPlayer() {
+        const px = player.x;
+        const py = player.y;
+        const w = player.width;
+        const h = player.height;
+
+        // 影子
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(px - w/2 + 4, py - h/2 + 4, w, h);
+
+        // 车身主装甲
+        ctx.fillStyle = '#14171d';
+        ctx.fillRect(px - w/2, py - h/2, w, h);
+        
+        // 金色装甲边框
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px - w/2, py - h/2, w, h);
+
+        // 车窗
+        ctx.fillStyle = '#2a2a35';
+        ctx.fillRect(px - w/2 + 6, py - h/2 + 10, w - 12, 15);
+
+        // 车轮
+        ctx.fillStyle = '#000';
+        ctx.fillRect(px - w/2 - 4, py - h/2 + 8, 6, 14);
+        ctx.fillRect(px + w/2 - 2, py - h/2 + 8, 6, 14);
+        ctx.fillRect(px - w/2 - 4, py + h/2 - 22, 6, 14);
+        ctx.fillRect(px + w/2 - 2, py + h/2 - 22, 6, 14);
+
+        // 车头灯（灯光特效）
+        ctx.fillStyle = 'rgba(212, 175, 55, 0.4)';
+        ctx.beginPath();
+        ctx.moveTo(px - w/2 + 4, py - h/2);
+        ctx.lineTo(px - w/2 - 15, py - h/2 - 30);
+        ctx.lineTo(px + w/2 + 15, py - h/2 - 30);
+        ctx.lineTo(px + w/2 - 4, py - h/2);
+        ctx.fill();
+        
+        // 车灯灯泡
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(px - 10, py - h/2, 6, 3);
+        ctx.fillRect(px + 4, py - h/2, 6, 3);
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        
+        if (score > highScore) {
+            highScore = Math.floor(score);
+            localStorage.setItem('shadowRushHighScore', highScore);
+            document.getElementById('rushHighScore').textContent = highScore;
+        }
+
+        // 资金奖励：1个金币 = 1万行动资金
+        let reward = coinsCollected * 2000;
+        if (reward > 0 && typeof dispatchFunds !== 'undefined') {
+            dispatchFunds += reward;
+            if (typeof renderDispatchFunds === 'function') renderDispatchFunds();
+        }
+        if (typeof saveGameState === 'function') saveGameState();
+
+        let comment = "";
+        if (score < 200) comment = "就这点距离？连德州的州界都没出。";
+        else if (score < 500) comment = "车技勉强及格，不过下次记得躲开那些红色的东西。";
+        else comment = "干得漂亮，这车技够资格给我当司机了。奖金收好。";
+
+        document.getElementById('rushFinalScore').textContent = `${Math.floor(score)} m`;
+        document.getElementById('rushModalDesc').innerHTML = `${comment}<br><br><span style="color:var(--gold); font-size:12px;">拾取金币: ${coinsCollected} (行动资金 +$${reward.toLocaleString('en-US')})</span>`;
+        document.getElementById('rushModal').classList.add('active');
+
+       // 👇 修复：在死亡瞬间立刻存下真实分数，防止被新一局覆盖
+const finalScore = Math.floor(score); 
+
+if (typeof triggerGravesAltMessage === 'function') {
+    setTimeout(() => {
+        triggerGravesAltMessage(`Darlin'，极速突围结束，跑了 ${finalScore} 米。${comment}`);
+    }, 2000);
+}
+    }
+})();
+
+
+</script>
+<!-- 暗影极速 · 纵向跑酷 -->
+<div class="rush-overlay" id="rushOverlay">
+    <div class="rush-header">
+        <div class="rush-title">暗影极速 · SHADOW RUSH</div>
+        <div class="rush-close" onclick="closeShadowRush()">✕</div>
+    </div>
+    
+    <div class="rush-score-board">
+        <div>距离：<span id="rushScore">0</span> m</div>
+        <div>金币：<span id="rushCoins">0</span> 🪙</div>
+        <div>最高：<span id="rushHighScore">0</span> m</div>
+    </div>
+
+    <div class="rush-canvas-wrapper">
+        <canvas id="rushCanvas"></canvas>
+    </div>
+
+    <div class="rush-controls">
+        <div class="rush-ctrl-btn" onclick="rushMove('left')">
+            ⬅ <span>左移 (←)</span>
+        </div>
+        <div class="rush-ctrl-btn" onclick="rushMove('right')">
+            ➡ <span>右移 (→)</span>
+        </div>
+    </div>
+
+    <!-- 结算弹窗 -->
+    <div class="rush-modal" id="rushModal">
+        <div class="rush-modal-card">
+            <div class="rush-modal-title">车辆损毁</div>
+            <div class="rush-modal-rank" id="rushFinalScore">0 m</div>
+            <div class="rush-modal-desc" id="rushModalDesc">格瑞夫斯正在赶来...</div>
+            <button class="rush-btn" onclick="rushRestart()">重新部署</button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
