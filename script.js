@@ -9988,3 +9988,596 @@ if (typeof triggerGravesAltMessage === 'function') {
 }
     }
 })();
+
+/* ================= 暗影旅行 · 核心逻辑 ================= */
+(function() {
+    'use strict';
+    
+    // ============ 6 座城市数据 ============
+const TRAVEL_CITIES = [
+    {
+        id: 'paris', name: '巴黎', emoji: '🗼',
+        country: 'France · 法国',
+        lat: 48.85, lng: 2.35,
+        bg: 'paris.jpg',
+        spots: [
+            { id: 'paris_1', name: '埃菲尔铁塔', emoji: '🗼', photo: 'paris_1.jpg',
+              eventTitle: '铁塔亮灯',
+              eventDesc: '整点到了。铁塔上的两万盏灯同时闪起来，像一场没人预告的流星雨。',
+              gravesLine: '"两万盏灯同时亮。法国人真会搞花活。不过这光线打在你脸上，还挺好看。"' },
+            { id: 'paris_2', name: '塞纳河游船', emoji: '🛶', photo: 'paris_2.jpg',
+              eventTitle: '游船夜风',
+              eventDesc: '塞纳河上，游船慢慢滑过一座石桥。河面的灯影被水波揉碎又拼合。',
+              gravesLine: '"夜风凉，把外套穿上。别跟我说不冷，你撒谎技术很烂。"' },
+            { id: 'paris_3', name: '蒙马特高地', emoji: '🌅', photo: 'paris_3.jpg',
+              eventTitle: '清晨的画家广场',
+              eventDesc: '天刚亮，蒙马特高地的画家广场还没开张。几把旧画架立在石板路上，晨光把影子拉得很长。',
+              gravesLine: '"这地方艺术家扎堆。我本来觉得是浪费时间。现在坐这儿看太阳，倒也不算太浪费。……别看我，看日出。"' }
+        ],
+        hiddenTitle: '巴黎 · 铁塔顶上',
+        hiddenText: '埃菲尔铁塔顶层的风比下面冷得多。他把外套罩在你肩上，自己靠在栏杆边，没抽烟。\n\n"我以前来过这儿。那时候穿着军装，口袋里没几个钱。这城市跟我没关系。"\n\n"现在不一样了。"\n\n他侧头看你，霓虹让他的眼睛亮亮的。\n\n"现在站在这儿的是暗影公司CEO。整座城市，我想让哪盏灯亮就让哪盏亮。"\n\n轻轻笑了一声。\n\n"但说实话，那些灯再亮，也跟我没什么关系。"\n\n他的手落到你肩上。\n\n"只有你在，这地方我才会多看两眼。"'
+    },
+    {
+        id: 'tokyo', name: '东京', emoji: '⛩️',
+        country: 'Japan · 日本',
+        lat: 35.68, lng: 139.69,
+        bg: 'tokyo.jpg',
+        spots: [
+            { id: 'tokyo_1', name: '浅草寺', emoji: '⛩️', photo: 'tokyo_1.jpg',
+              eventTitle: '雪落雷门',
+              eventDesc: '浅草寺的雷门大灯笼在雪里亮着，红色的纸罩上积了薄薄一层白。香炉的烟缓缓上升，跟雪花混在一起。',
+              gravesLine: '"下雪了。这庙比照片里小。不过那个红灯笼倒是够醒目。你手冷？伸过来。"' },
+            { id: 'tokyo_2', name: '涩谷路口', emoji: '🚦', photo: 'tokyo_2.jpg',
+              eventTitle: '人潮涌来',
+              eventDesc: '涩谷十字路口的绿灯亮了。三千多人同时涌向斑马线，像一场预演过的潮水。',
+              gravesLine: '"绿灯一亮，三千人跟开闸似的。别松手，跟我走。丢了上哪儿找你去。"' },
+            { id: 'tokyo_3', name: '台场摩天轮', emoji: '🎡', photo: 'tokyo_3.jpg',
+              eventTitle: '摩天轮上',
+              eventDesc: '台场的摩天轮慢慢转到最高点。东京湾的灯火在脚下铺开，像撒了一地的橘子皮。',
+              gravesLine: '"这玩意儿转一圈要十六分钟。我在上面能处理三份合同。……你想说什么？行，我听。"' }
+        ],
+        hiddenTitle: '东京 · 涩谷人潮',
+        hiddenText: '涩谷的绿灯亮起，三千人同时涌向斑马线。他几乎是在第一时间抓住你的手，把你往身边带了一步。\n\n"别走散。"\n\n他声音不高，在这嘈杂里居然还听得清楚。\n\n你抬头看他，他还看着前方。\n\n"Darlin\'，我以为我什么都不怕。"绿灯在闪烁倒数，"结果我竟然在怕一松手你就不见。你又不是小孩了。"\n\n到了。他没松手，反而握得更紧。\n\n"明天去夏威夷好吗？"'
+    },
+    {
+        id: 'dubai', name: '迪拜', emoji: '🕌',
+        country: 'UAE · 阿联酋',
+        lat: 25.20, lng: 55.27,
+        bg: 'dubai.jpg',
+        spots: [
+            { id: 'dubai_1', name: '哈利法塔', emoji: '🏙️', photo: 'dubai_1.jpg',
+              eventTitle: '云端之上',
+              eventDesc: '哈利法塔第148层。窗外的城市小得像模型，沙漠在远处延伸成一片模糊的金色。',
+              gravesLine: '"整层都清了。不是炫富，是嫌人多。……也不想别人看你。"' },
+            { id: 'dubai_2', name: '沙漠冲沙', emoji: '🏜️', photo: 'dubai_2.jpg',
+              eventTitle: '沙丘上',
+              eventDesc: '越野车冲上沙丘顶端，停了一秒，然后俯冲下去。轮胎卷起的沙尘在身后拖成一条黄龙。',
+              gravesLine: '"这沙子晃眼，跟你似的。……就是随口一说。专心抓稳。"' },
+            { id: 'dubai_3', name: '帆船酒店', emoji: '🍽️', photo: 'dubai_3.jpg',
+              eventTitle: '海底餐厅',
+              eventDesc: '帆船酒店的海底餐厅，鱼群隔着玻璃游过。烛光把两个人的脸都染成暖色。',
+              gravesLine: '"这顿饭的价格够买辆车。要真论起来是浪费。但你笑起来的时候，就……算了，吃吧。"' }
+        ],
+        hiddenTitle: '迪拜 · 沙漠篝火',
+        hiddenText: '深夜的沙漠，篝火噼啪响。他拿着一根树枝拨弄火堆，火星腾起来，在半空中就灭了。\n\n"以前我一个人在沙漠里过夜，脑子里想的都是明天要杀的人。"\n\n火光把他的侧脸照得明暗分明。\n\n"现在坐在这儿，想的是明天给你做什么早餐。"\n\n他抬眼看你，嘴角有一点笑。\n\n"别笑。我也不太习惯自己这样。"\n\n火光里他眯了眯眼。\n\n"可是你说过喜欢。我记得你提过一次。"'
+    },
+    {
+        id: 'rio', name: '里约', emoji: '🎭',
+        country: 'Brazil · 巴西',
+        lat: -22.91, lng: -43.17,
+        bg: 'rio.jpg',
+        spots: [
+            { id: 'rio_1', name: '基督像', emoji: '⛰️', photo: 'rio_1.jpg',
+              eventTitle: '俯瞰全城',
+              eventDesc: '基督像脚下的平台。整座里约铺在山海之间，黑色的山、白色的浪、彩色的房子。',
+              gravesLine: '"从上面看，这城市被切成两半。富人区和贫民窟。挺有意思的布局。……你在看基督像？行，我不说话了。"' },
+            { id: 'rio_2', name: '海滩', emoji: '🏖️', photo: 'rio_2.jpg',
+              eventTitle: '沙滩椰子水',
+              eventDesc: '科帕卡巴纳海滩的黑白波浪纹地砖一直延伸到海岸线。一杯冰椰子水放在小桌上。',
+              gravesLine: '"这椰子水卖十倍价。我不在意。好吧，其实连我都觉得贵了。"' },
+            { id: 'rio_3', name: '狂欢节', emoji: '💃', photo: 'rio_3.jpg',
+              eventTitle: '桑巴巡游',
+              eventDesc: '狂欢节的巡游花车在街上缓缓前进，舞者的羽毛头饰在灯光里晃动。',
+              gravesLine: '"这种场合我从来不来。太吵。今晚破例。"' }
+        ],
+        hiddenTitle: '里约 · 礁石上的承诺',
+        hiddenText: '狂欢节的音乐凌晨两点才停。沙滩上人散得差不多了，你们没回酒店，坐在礁石上。\n\n"刚才有个小孩在我手腕上系了根红丝带。他说这是里约的祝福。"\n\n他抬手看了那条红绳。\n\n"这辈子没人给我系过这玩意儿。"\n\n然后他解下来，扣在你手腕上。\n\n"戴着。"\n\n你抬头看他。\n\n"别摘。"他收回手，"只要它在你手上一天，不管你在哪儿，我都能找到。"\n\n停了两秒。\n\n"这不是警告。是承诺。"'
+    },
+    {
+        id: 'iceland', name: '冰岛', emoji: '❄️',
+        country: 'Iceland · 冰岛',
+        lat: 64.96, lng: -19.02,
+        bg: 'iceland.jpg',
+        spots: [
+            { id: 'iceland_1', name: '黑沙滩', emoji: '🌊', photo: 'iceland_1.jpg',
+              eventTitle: '黑沙滩巨浪',
+              eventDesc: 'Reynisfjara 黑沙滩。白色的巨浪拍在黑色的沙上，把火山石磨成了圆润的小块。',
+              gravesLine: '"这浪看着温柔，能直接把你拖走。别站太近。……我说真的，退后两步。"' },
+            { id: 'iceland_2', name: '蓝湖温泉', emoji: '💧', photo: 'iceland_2.jpg',
+              eventTitle: '蓝湖的水',
+              eventDesc: '蓝湖温泉的奶蓝色水面，白色雾气缓慢上升。远处的黑色熔岩田被雪覆盖了一半。',
+              gravesLine: '"水温有点烫。你多泡一会儿，我出去抽根烟。……怎么了？行，我坐着。"' },
+            { id: 'iceland_3', name: '极光木屋', emoji: '🌌', photo: 'iceland_3.jpg',
+              eventTitle: '极光出现',
+              eventDesc: '木屋门口。绿色的极光像一条缓慢流动的河，从北边的天空开始，慢慢铺满整片夜空。',
+              gravesLine: '"别说话。……就看着。这种时候说什么都是废话。"' }
+        ],
+        hiddenTitle: '冰岛 · 木屋炉火',
+        hiddenText: '木屋里炉火烧得旺，窗玻璃结了一层白霜。他坐在单人沙发上，一杯威士忌在手里，没喝，看着火。\n\n"冰岛这国家挺安静。没有枪声，没有电话，没有下一秒可能要签的合同。"\n\n很久没说话。\n\n"我以前在战场上待过更冷的地方。那种冷，是往骨头里钻的，钻完还剩一个人。"\n\n他把杯子放到地上。\n\n"今天下了飞机，看到你站在雪里的时候，我突然觉得……这种冷，好像也不算太难受。"\n\n他站起来，走过来，手落在你头顶。\n\n"回去之后，可能得忙一阵。趁现在，好好玩。"'
+    },
+    {
+        id: 'hawaii', name: '夏威夷', emoji: '🌺',
+        country: 'USA · 美国',
+        lat: 21.31, lng: -157.86,
+        bg: 'hawaii.jpg',
+        spots: [
+            { id: 'hawaii_1', name: '威基基海滩', emoji: '🌅', photo: 'hawaii_1.jpg',
+              eventTitle: '日落冲浪',
+              eventDesc: '威基基海滩的日落把海面染成橘红色。远处有人抱着冲浪板往回走，海浪一层叠一层。',
+              gravesLine: '"我湿透了，你笑得那么大声。……行，你厉害。等我起来你就完了。"' },
+            { id: 'hawaii_2', name: '火山口', emoji: '🌋', photo: 'hawaii_2.jpg',
+              eventTitle: '硫磺味',
+              eventDesc: '火山口边缘的步道。地面是冷却的黑色熔岩，远处冒着硫磺蒸汽，空气里有种金属味。',
+              gravesLine: '"这硫磺味像战场。但这里没人死，只有地球在活。挺好，偶尔看看地球活着的样子。"' },
+            { id: 'hawaii_3', name: '草裙舞晚宴', emoji: '🔥', photo: 'hawaii_3.jpg',
+              eventTitle: '篝火晚宴',
+              eventDesc: '海滩上的篝火晚宴。穿草裙的舞者在火堆旁摆动，鼓声在夜色里传得很远。',
+              gravesLine: '"这舞我不跳。……好吧。"' }
+        ],
+        hiddenTitle: '夏威夷 · 海边的承诺',
+        hiddenText: '威基基海滩的日落把整片海染成橘红。他赤脚站在沙上，海水涌过来又退，他没躲。\n\n"我一直在做相似的事，为一些我自己都忘了的理由。"\n\n他转过身，两只手落到你肩上搭着。\n\n"等哪天我真退休了——我现在还不敢想那天——我想在这儿弄栋房子。你早上看海，我晚上回来做饭。"\n\n他低头，额头贴了一下你的额头。\n\n"不过那都是以后的事。"\n\n他直起身。\n\n"现在回家。"'
+    }
+];
+    
+    // ============ 存档 ============
+    const TRAVEL_SAVE_KEY = 'shadow_travel_save';
+    let travelData = { collected: {}, visited: {}, totalAffection: 0 };
+    
+    function loadTravelData() {
+        try {
+            const saved = localStorage.getItem(TRAVEL_SAVE_KEY);
+            if (saved) travelData = Object.assign(travelData, JSON.parse(saved));
+        } catch (e) { console.warn('旅行存档读取失败', e); }
+    }
+    function saveTravelData() {
+        try {
+            localStorage.setItem(TRAVEL_SAVE_KEY, JSON.stringify(travelData));
+        } catch (e) { console.warn('旅行存档保存失败', e); }
+    }
+    
+    // ============ 工具 ============
+    function getCity(id) { return TRAVEL_CITIES.find(c => c.id === id); }
+    function getCollectedCount(cityId) { return (travelData.collected[cityId] || []).length; }
+    function getTotalCollected() {
+        let s = 0; Object.values(travelData.collected).forEach(a => s += a.length); return s;
+    }
+    function getTotalVisited() { return Object.keys(travelData.visited).length; }
+    function isSpotCollected(cityId, spotId) {
+        return (travelData.collected[cityId] || []).includes(spotId);
+    }
+    function isCityCompleted(cityId) { return getCollectedCount(cityId) >= 3; }
+    
+    // ============ 地球绘制 ============
+    let earthCanvas, earthCtx, earthAnimId, earthRotation = 0, cityPoints = [];
+    
+    function initTravelEarth() {
+    earthCanvas = document.getElementById('travelEarthCanvas');
+    if (!earthCanvas) return;
+    earthCtx = earthCanvas.getContext('2d');
+    earthRotation = 0;
+    
+    // 👇 核心修复：改用 onclick，避免拖拽事件冲突导致点不动
+    earthCanvas.onclick = handleEarthClick; 
+    
+    drawTravelEarth();
+}
+    
+    function drawTravelEarth() {
+        if (!earthCtx || !earthCanvas) return;
+        const overlay = document.getElementById('travelOverlay');
+        if (!overlay || !overlay.classList.contains('active')) {
+            if (earthAnimId) { cancelAnimationFrame(earthAnimId); earthAnimId = null; }
+            return;
+        }
+        
+        const w = earthCanvas.width, h = earthCanvas.height;
+        const cx = w / 2, cy = h / 2;
+        const r = Math.min(w, h) * 0.4;
+        
+        earthCtx.clearRect(0, 0, w, h);
+        
+        // 外发光
+        const glow = earthCtx.createRadialGradient(cx, cy, r - 20, cx, cy, r + 25);
+        glow.addColorStop(0, 'rgba(212, 175, 55, 0.4)');
+        glow.addColorStop(0.5, 'rgba(212, 175, 55, 0.1)');
+        glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        earthCtx.beginPath();
+        earthCtx.arc(cx, cy, r + 25, 0, Math.PI * 2);
+        earthCtx.fillStyle = glow;
+        earthCtx.fill();
+        
+        // 海洋
+        const bg = earthCtx.createRadialGradient(cx - 30, cy - 30, 20, cx, cy, r);
+        bg.addColorStop(0, '#1a2030');
+        bg.addColorStop(1, '#08090b');
+        earthCtx.beginPath();
+        earthCtx.arc(cx, cy, r, 0, Math.PI * 2);
+        earthCtx.fillStyle = bg;
+        earthCtx.fill();
+        
+        // 边缘
+        earthCtx.beginPath();
+        earthCtx.arc(cx, cy, r, 0, Math.PI * 2);
+        earthCtx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
+        earthCtx.lineWidth = 1.5;
+        earthCtx.stroke();
+        
+        // 经纬
+        earthCtx.save();
+        earthCtx.translate(cx, cy);
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2 + earthRotation;
+            earthCtx.beginPath();
+            for (let j = 0; j <= 180; j += 10) {
+                const lat = (j - 90) * Math.PI / 180;
+                const x = r * Math.cos(lat) * Math.cos(angle);
+                const y = r * Math.sin(lat);
+                if (j === 0) earthCtx.moveTo(x, y);
+                else earthCtx.lineTo(x, y);
+            }
+            const alpha = 0.15 + 0.35 * Math.abs(Math.cos(angle));
+            earthCtx.strokeStyle = `rgba(212, 175, 55, ${alpha})`;
+            earthCtx.lineWidth = 1;
+            earthCtx.stroke();
+        }
+        for (let lat = -60; lat <= 60; lat += 30) {
+            const rl = lat * Math.PI / 180;
+            earthCtx.beginPath();
+            for (let lng = 0; lng <= 360; lng += 5) {
+                const ang = (lng * Math.PI / 180) + earthRotation;
+                const x = r * Math.cos(rl) * Math.cos(ang);
+                const y = r * Math.sin(rl);
+                if (lng === 0) earthCtx.moveTo(x, y);
+                else earthCtx.lineTo(x, y);
+            }
+            earthCtx.strokeStyle = `rgba(212, 175, 55, ${0.1 + 0.15 * Math.cos(rl)})`;
+            earthCtx.lineWidth = 1;
+            earthCtx.stroke();
+        }
+        earthCtx.restore();
+        
+        // 城市点
+        cityPoints = [];
+        TRAVEL_CITIES.forEach(city => {
+            const radLat = city.lat * Math.PI / 180;
+            const radLng = city.lng * Math.PI / 180;
+            const x3d = r * Math.cos(radLat) * Math.sin(radLng + earthRotation);
+            const y3d = r * Math.sin(radLat);
+            const z3d = r * Math.cos(radLat) * Math.cos(radLng + earthRotation);
+            if (z3d > 0) {
+                const sx = cx + x3d, sy = cy - y3d;
+                const pulse = Math.sin(Date.now() / 400) * 0.5 + 0.5;
+                const isComplete = isCityCompleted(city.id);
+                
+                earthCtx.beginPath();
+                earthCtx.arc(sx, sy, 8 + pulse * 6, 0, Math.PI * 2);
+                earthCtx.fillStyle = isComplete
+                    ? `rgba(46, 204, 113, ${0.15 + pulse * 0.2})`
+                    : `rgba(212, 175, 55, ${0.15 + pulse * 0.3})`;
+                earthCtx.fill();
+                
+                earthCtx.beginPath();
+                earthCtx.arc(sx, sy, 4, 0, Math.PI * 2);
+                earthCtx.fillStyle = isComplete ? '#2ecc71' : '#d4af37';
+                earthCtx.shadowColor = earthCtx.fillStyle;
+                earthCtx.shadowBlur = 12;
+                earthCtx.fill();
+                earthCtx.shadowBlur = 0;
+                
+                earthCtx.font = 'bold 11px "Consolas", monospace';
+                earthCtx.textAlign = 'center';
+                earthCtx.fillStyle = isComplete ? '#2ecc71' : '#d4af37';
+                earthCtx.fillText(city.name, sx, sy - 12);
+                
+                cityPoints.push({ x: sx, y: sy, cityId: city.id });
+            }
+        });
+        
+        earthRotation += 0.002;
+        earthAnimId = requestAnimationFrame(drawTravelEarth);
+    }
+    
+    function handleEarthClick(e) {
+    if (!earthCanvas) return;
+    
+    console.log("画布被点击了！");
+    
+    // 👇 新增：阻止默认行为和事件冒泡
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = earthCanvas.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) * (earthCanvas.width / rect.width);
+    const clickY = (e.clientY - rect.top) * (earthCanvas.height / rect.height);
+    
+    let nearestCity = null;
+    let minDist = 80; 
+    
+    for (const p of cityPoints) {
+        const dist = Math.hypot(clickX - p.x, clickY - p.y);
+        if (dist < minDist) {
+            minDist = dist;
+            nearestCity = p.cityId;
+        }
+    }
+    
+    if (nearestCity) {
+        console.log("选中了城市:", nearestCity);
+        showTravelCityCard(nearestCity);
+    } else {
+        console.log("点偏了，没点到城市。");
+    }
+}
+    
+    // ============ 城市卡片 ============
+    let currentTravelCityId = null;
+    
+   function showTravelCityCard(cityId) {
+    const city = getCity(cityId);
+    if (!city) return;
+    currentTravelCityId = cityId;
+    
+    document.getElementById('tccEmoji').textContent = city.emoji;
+    document.getElementById('tccName').textContent = city.name;
+    document.getElementById('tccCountry').textContent = city.country;
+    
+    const c = getCollectedCount(cityId);
+    const v = travelData.visited[cityId];
+    document.getElementById('tccProgress').textContent = `明信片 ${c}/3 · ${v ? '已到访' : '未到访'}`;
+    
+    const cardModal = document.getElementById('travelCityCardModal');
+    
+    // 👇 核心修复：强行挂载到 body 上，脱离 .phone-mockup 的限制
+    if (cardModal.parentNode !== document.body) {
+        document.body.appendChild(cardModal);
+    }
+    
+    cardModal.classList.add('active');
+    cardModal.style.display = 'flex'; 
+    cardModal.style.zIndex = '2147483647'; // 强制最高层级，防止被遮挡
+}
+
+window.closeTravelCityCard = function() {
+    const cardModal = document.getElementById('travelCityCardModal');
+    // 优雅的关闭方式
+    cardModal.classList.remove('active');
+    cardModal.style.display = 'none';
+    currentTravelCityId = null;
+};
+    
+  window.departToCity = function() {
+    if (!currentTravelCityId) return;
+    const cityId = currentTravelCityId;
+    closeTravelCityCard();
+    
+    const flying = document.getElementById('travelFlying');
+    document.getElementById('flyingRoute').textContent = `飞往 ${getCity(cityId).name}...`;
+    
+    flying.classList.add('active');
+    flying.style.display = 'flex';
+    
+    setTimeout(() => {
+        flying.classList.remove('active');
+        flying.style.display = 'none';
+        openTravelCity(cityId);
+    }, 2200);
+};
+
+function openTravelCity(cityId) {
+    const city = getCity(cityId);
+    if (!city) return;
+    
+    if (!travelData.visited[cityId]) {
+        travelData.visited[cityId] = true;
+        travelData.totalAffection += 5;
+        syncTravelAffection(5);
+        saveTravelData();
+    }
+    
+    document.getElementById('cityBg').style.backgroundImage = `url('${city.bg}')`;
+    document.getElementById('cityPageTitle').textContent = `${city.emoji} ${city.name}`;
+    renderCitySpots(cityId);
+    
+    const cityOverlay = document.getElementById('travelCityOverlay');
+    cityOverlay.classList.add('active');
+    cityOverlay.style.display = 'flex'; // 用 flex 铺满，去掉之前的 block
+}
+    
+    function renderCitySpots(cityId) {
+        const city = getCity(cityId);
+        const container = document.getElementById('citySpots');
+        container.innerHTML = '';
+        document.getElementById('cityPanelCount').textContent = `${getCollectedCount(cityId)} / 3`;
+        
+        city.spots.forEach(spot => {
+            const isC = isSpotCollected(cityId, spot.id);
+            const card = document.createElement('div');
+            card.className = 'city-spot-card ' + (isC ? 'collected' : 'locked');
+            card.innerHTML = `
+                <div class="city-spot-img" style="background-image: url('${spot.photo}')"></div>
+                <div class="city-spot-name">${spot.emoji} ${spot.name}</div>
+            `;
+            card.onclick = () => handleSpotClick(cityId, spot);
+            container.appendChild(card);
+        });
+    }
+    
+    function handleSpotClick(cityId, spot) {
+        const isC = isSpotCollected(cityId, spot.id);
+        if (isC) {
+            showTravelEvent(spot, '已收集', '这张明信片已经在你手上了。', '想再看一次的话，随时可以回来。', null);
+            return;
+        }
+        showTravelEvent(spot, spot.eventTitle, spot.eventDesc, spot.gravesLine, () => {
+            if (!travelData.collected[cityId]) travelData.collected[cityId] = [];
+            travelData.collected[cityId].push(spot.id);
+            const add = 3 + Math.floor(Math.random() * 6);
+            travelData.totalAffection += add;
+            syncTravelAffection(add);
+            saveTravelData();
+            renderCitySpots(cityId);
+            updateTravelStats();
+            if (isCityCompleted(cityId)) {
+                setTimeout(() => showTravelHidden(cityId), 800);
+            }
+        });
+    }
+    
+    // ============ 事件弹窗 ============
+    let currentEventCb = null;
+    function showTravelEvent(spot, title, desc, line, onContinue) {
+        document.getElementById('tveEmoji').textContent = spot.emoji;
+        document.getElementById('tveTitle').textContent = title;
+        document.getElementById('tveDesc').textContent = desc;
+        document.getElementById('tveGravesLine').textContent = line;
+        currentEventCb = onContinue || null;
+        document.getElementById('travelEventModal').classList.add('active');
+    }
+    window.closeTravelEvent = function() {
+        document.getElementById('travelEventModal').classList.remove('active');
+        if (currentEventCb) {
+            const cb = currentEventCb;
+            currentEventCb = null;
+            setTimeout(cb, 200);
+        }
+    };
+    
+    // ============ 隐藏剧情 ============
+    function showTravelHidden(cityId) {
+        const city = getCity(cityId);
+        if (!city) return;
+        document.getElementById('tvhTitle').textContent = city.hiddenTitle;
+        document.getElementById('tvhText').textContent = city.hiddenText;
+        
+        const key = 'hidden_claimed_' + cityId;
+        if (!travelData[key]) {
+            travelData[key] = true;
+            travelData.totalAffection += 20;
+            syncTravelAffection(20);
+            saveTravelData();
+        }
+        document.getElementById('travelHiddenModal').classList.add('active');
+    }
+    window.closeTravelHidden = function() {
+        document.getElementById('travelHiddenModal').classList.remove('active');
+    };
+    
+    // ============ 好感同步 ============
+    function syncTravelAffection(delta) {
+        let current = parseInt(localStorage.getItem('gravesAffection')) || 0;
+        current += delta;
+        if (current < 0) current = 0;
+        localStorage.setItem('gravesAffection', current);
+        if (typeof affectionScore !== 'undefined') affectionScore = current;
+        if (typeof checkAffectionMilestones === 'function') checkAffectionMilestones();
+        updateTravelStats();
+    }
+    
+    function updateTravelStats() {
+        const a = document.getElementById('travelAffectionDisplay');
+        if (a) a.textContent = travelData.totalAffection;
+        const v = document.getElementById('travelVisitedCount');
+        if (v) v.textContent = getTotalVisited();
+        const c = document.getElementById('travelCollectedCount');
+        if (c) c.textContent = getTotalCollected();
+    }
+    
+    // ============ 开关 ============
+       window.openTravel = function() {
+    if (typeof closeAllOverlays === 'function') closeAllOverlays();
+    loadTravelData();
+    updateTravelStats();
+    
+    const overlay = document.getElementById('travelOverlay');
+    const phoneMockup = document.querySelector('.phone-mockup');
+    
+    if (overlay && phoneMockup) {
+        if (overlay.parentNode !== phoneMockup) {
+            phoneMockup.appendChild(overlay);
+        }
+        overlay.classList.add('active');
+        overlay.style.display = 'flex';
+        
+        // 👇 核心修复：把所有的旅行弹窗移到 body 上，并清空状态
+        const travelModals = [
+            'travelCityCardModal', 'travelFlying', 'travelCityOverlay', 
+            'travelEventModal', 'travelHiddenModal'
+        ];
+        travelModals.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                if (el.parentNode !== document.body) {
+                    document.body.appendChild(el); // 移到 body 防止被裁剪
+                }
+                el.classList.remove('active');
+                el.style.removeProperty('display'); 
+            }
+        });
+    }
+    
+    if (typeof earthAnimId !== 'undefined' && earthAnimId) {
+        cancelAnimationFrame(earthAnimId);
+        earthAnimId = null;
+    }
+    
+    setTimeout(initTravelEarth, 100);
+};
+
+window.closeTravel = function() {
+    const o = document.getElementById('travelOverlay');
+    if (o) {
+        o.classList.remove('active');
+        o.style.display = 'none'; 
+    }
+    
+    // 👇 核心修复：关闭主界面时，一并关闭所有子弹窗
+    const travelModals = [
+        'travelCityCardModal', 'travelFlying', 'travelCityOverlay', 
+        'travelEventModal', 'travelHiddenModal'
+    ];
+    travelModals.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.remove('active');
+            el.style.display = 'none';
+        }
+    });
+
+    if (typeof earthAnimId !== 'undefined' && earthAnimId) { 
+        cancelAnimationFrame(earthAnimId); 
+        earthAnimId = null; 
+    }
+};
+    
+    window.closeTravelCity = function() {
+    const o = document.getElementById('travelCityOverlay');
+    if (o) {
+        o.classList.remove('active');
+        o.style.display = 'none'; // 👈 核心修复：必须加这行！强行隐藏，清除行内样式
+    }
+    
+    // 顺便把可能弹出的剧情/事件弹窗也隐藏掉
+    ['travelEventModal', 'travelHiddenModal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.remove('active');
+            el.style.display = 'none';
+        }
+    });
+    
+    updateTravelStats();
+};
+    // 初始化
+    loadTravelData();
+    updateTravelStats();
+})(); // 👈 关键点：如果你发现文件最后没有这行，把它加上！

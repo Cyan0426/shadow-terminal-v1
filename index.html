@@ -8,8 +8,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#060608">
     <title>暗影终端 · Shadow Terminal</title>
-</head>
+
   <link rel="stylesheet" href="style.css">
+  </head>
 <body>
 <div class="phone-mockup">
     
@@ -202,6 +203,14 @@
 
             <!-- 朋友圈 -->
             <div class="page" id="page-moments">
+                <div class="travel-entry" onclick="openTravel()">
+    <div class="album-icon">✈️</div>
+    <div class="album-text">
+        <div class="album-title">暗影旅行</div>
+        <div class="album-sub">6 座城市 · 18 张明信片待收集</div>
+    </div>
+    <div class="album-arrow">→</div>
+</div>
                 <div class="album-entry" onclick="openAlbum()">
                     <div class="album-icon">📸</div>
                     <div class="album-text">
@@ -210,6 +219,9 @@
                     </div>
                     <div class="album-arrow">→</div>
                 </div>
+
+
+
 
 <div class="briefing-entry" onclick="openBriefing()">
     <div class="album-icon">📋</div>
@@ -383,6 +395,11 @@
 </div>
 </div>
 <!-- 控制中心悬浮按钮（仅在登录后显示） -->
+
+<!-- ============ 暗影旅行 · HTML 结构 ============ -->
+
+
+
 <div class="memo-fab" onclick="openAppCenter()" style="position: absolute; bottom: 90px; right: 20px; z-index: 999;">📱</div>
 <!-- 入职面试主界面 -->
 <div class="recruit-overlay" id="recruitOverlay" style="display: none;">
@@ -1850,6 +1867,97 @@
         </div>
     </div>
 </div>
+
+
+<!-- 旅行地球主界面 -->
+<div class="travel-overlay" id="travelOverlay">
+    <div class="travel-header">
+        <div class="travel-title">✈️ 暗影旅行 · TRAVEL</div>
+        <div class="travel-close" onclick="closeTravel()">✕</div>
+    </div>
+    <div class="travel-earth-wrap">
+        <canvas id="travelEarthCanvas" width="380" height="380"></canvas>
+        <div class="travel-hint">点击城市标记 · 出发</div>
+    </div>
+    <div class="travel-stats-bar">
+        <div class="travel-stat">
+            <span class="ts-label">旅行好感</span>
+            <span class="ts-value" id="travelAffectionDisplay">0</span>
+        </div>
+        <div class="travel-stat">
+            <span class="ts-label">已探索</span>
+            <span class="ts-value"><span id="travelVisitedCount">0</span>/6</span>
+        </div>
+        <div class="travel-stat">
+            <span class="ts-label">明信片</span>
+            <span class="ts-value"><span id="travelCollectedCount">0</span>/18</span>
+        </div>
+    </div>
+</div>
+
+<!-- 城市确认卡片 -->
+<div class="travel-city-card-modal" id="travelCityCardModal">
+    <div class="tcc-card">
+        <div class="tcc-emoji" id="tccEmoji">🗼</div>
+        <div class="tcc-name" id="tccName">巴黎</div>
+        <div class="tcc-country" id="tccCountry">France · 法国</div>
+        <div class="tcc-progress" id="tccProgress">明信片 0/3 · 未到访</div>
+        <div class="tcc-buttons">
+            <button class="tcc-btn-cancel" onclick="closeTravelCityCard()">取 消</button>
+            <button class="tcc-btn-go" onclick="departToCity()">出 发</button>
+        </div>
+    </div>
+</div>
+
+<!-- 飞行过场 -->
+<div class="travel-flying" id="travelFlying">
+    <div class="flying-plane">✈️</div>
+    <div class="flying-route" id="flyingRoute">飞往 巴黎...</div>
+</div>
+
+<!-- 城市沉浸式页面 -->
+<div class="travel-city-overlay" id="travelCityOverlay">
+    <div class="city-bg" id="cityBg"></div>
+    <div class="city-top-bar">
+        <div class="city-back-btn" onclick="closeTravelCity()">←</div>
+        <div class="city-page-title" id="cityPageTitle">🗼 巴黎</div>
+        <div class="city-page-empty"></div>
+    </div>
+    <div class="city-bottom-panel">
+        <div class="city-panel-header">
+            <span>明信片收藏 · POSTCARDS</span>
+            <span id="cityPanelCount">0 / 3</span>
+        </div>
+        <div class="city-spots" id="citySpots"></div>
+    </div>
+</div>
+
+<!-- 事件弹窗 -->
+<div class="travel-event-modal" id="travelEventModal">
+    <div class="tve-card">
+        <div class="tve-header">
+            <div class="tve-emoji" id="tveEmoji">🗼</div>
+            <div class="tve-title" id="tveTitle">铁塔亮灯</div>
+        </div>
+        <div class="tve-desc" id="tveDesc"></div>
+        <div class="tve-graves">
+            <div class="tve-graves-name">P. GRAVES</div>
+            <div class="tve-graves-line" id="tveGravesLine"></div>
+        </div>
+        <button class="tve-continue" onclick="closeTravelEvent()">继 续</button>
+    </div>
+</div>
+
+<!-- 隐藏剧情弹窗 -->
+<div class="travel-hidden-modal" id="travelHiddenModal">
+    <div class="tvh-card">
+        <div class="tvh-title" id="tvhTitle">巴黎 · 隐藏剧情</div>
+        <div class="tvh-text" id="tvhText"></div>
+        <div class="tvh-reward">旅行好感 +20</div>
+        <button class="tvh-continue" onclick="closeTravelHidden()">收 下</button>
+    </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>
