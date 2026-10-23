@@ -10412,65 +10412,99 @@ function openTravelCity(cityId) {
         });
     }
     
-    function handleSpotClick(cityId, spot) {
-        const isC = isSpotCollected(cityId, spot.id);
-        if (isC) {
-            showTravelEvent(spot, '已收集', '这张明信片已经在你手上了。', '想再看一次的话，随时可以回来。', null);
-            return;
-        }
-        showTravelEvent(spot, spot.eventTitle, spot.eventDesc, spot.gravesLine, () => {
-            if (!travelData.collected[cityId]) travelData.collected[cityId] = [];
-            travelData.collected[cityId].push(spot.id);
-            const add = 3 + Math.floor(Math.random() * 6);
-            travelData.totalAffection += add;
-            syncTravelAffection(add);
-            saveTravelData();
-            renderCitySpots(cityId);
-            updateTravelStats();
-            if (isCityCompleted(cityId)) {
-                setTimeout(() => showTravelHidden(cityId), 800);
-            }
-        });
+   function handleSpotClick(cityId, spot) {
+    const isC = isSpotCollected(cityId, spot.id);
+    if (isC) {
+        // 如果是回顾已收集的
+        showTravelEvent(spot, '已收集', '这张明信片已经在你手上了。', '想再看一次的话，随时可以回来。', null);
+        return;
     }
+    
+    // 如果是新收集的
+    showTravelEvent(spot, spot.eventTitle, spot.eventDesc, spot.gravesLine, () => {
+        // 1. 确保数据结构存在
+        if (!travelData.collected[cityId]) {
+            travelData.collected[cityId] = [];
+        }
+        // 2. 存入数据
+        if (!travelData.collected[cityId].includes(spot.id)) {
+            travelData.collected[cityId].push(spot.id);
+        }
+        
+        const add = 3 + Math.floor(Math.random() * 6);
+        travelData.totalAffection += add;
+        syncTravelAffection(add);
+        
+        // 3. 强制保存到本地缓存
+        saveTravelData(); 
+        
+        // 4. 重新渲染卡片（变亮）
+        renderCitySpots(cityId);
+        updateTravelStats();
+        
+        // 5. 判断是否收集齐
+        if (isCityCompleted(cityId)) {
+            setTimeout(() => showTravelHidden(cityId), 800);
+        }
+    });
+}
     
     // ============ 事件弹窗 ============
-    let currentEventCb = null;
-    function showTravelEvent(spot, title, desc, line, onContinue) {
-        document.getElementById('tveEmoji').textContent = spot.emoji;
-        document.getElementById('tveTitle').textContent = title;
-        document.getElementById('tveDesc').textContent = desc;
-        document.getElementById('tveGravesLine').textContent = line;
-        currentEventCb = onContinue || null;
-        document.getElementById('travelEventModal').classList.add('active');
+   // ============ 事件弹窗 ============
+let currentEventCb = null;
+function showTravelEvent(spot, title, desc, line, onContinue) {
+    document.getElementById('tveEmoji').textContent = spot.emoji;
+    document.getElementById('tveTitle').textContent = title;
+    document.getElementById('tveDesc').textContent = desc;
+    document.getElementById('tveGravesLine').textContent = line;
+    currentEventCb = onContinue || null;
+    
+    const modal = document.getElementById('travelEventModal');
+    // 👇 核心修复：防止被其他容器限制层级
+    if (modal.parentNode !== document.body) document.body.appendChild(modal);
+    modal.classList.add('active');
+    modal.style.display = 'flex'; 
+}
+
+window.closeTravelEvent = function() {
+    const modal = document.getElementById('travelEventModal');
+    modal.classList.remove('active');
+    modal.style.display = 'none'; // 👈 核心修复：彻底把这块透明玻璃撤掉！
+    
+    if (currentEventCb) {
+        const cb = currentEventCb;
+        currentEventCb = null;
+        setTimeout(cb, 200);
     }
-    window.closeTravelEvent = function() {
-        document.getElementById('travelEventModal').classList.remove('active');
-        if (currentEventCb) {
-            const cb = currentEventCb;
-            currentEventCb = null;
-            setTimeout(cb, 200);
-        }
-    };
+};
     
     // ============ 隐藏剧情 ============
-    function showTravelHidden(cityId) {
-        const city = getCity(cityId);
-        if (!city) return;
-        document.getElementById('tvhTitle').textContent = city.hiddenTitle;
-        document.getElementById('tvhText').textContent = city.hiddenText;
-        
-        const key = 'hidden_claimed_' + cityId;
-        if (!travelData[key]) {
-            travelData[key] = true;
-            travelData.totalAffection += 20;
-            syncTravelAffection(20);
-            saveTravelData();
-        }
-        document.getElementById('travelHiddenModal').classList.add('active');
+    // ============ 隐藏剧情 ============
+function showTravelHidden(cityId) {
+    const city = getCity(cityId);
+    if (!city) return;
+    document.getElementById('tvhTitle').textContent = city.hiddenTitle;
+    document.getElementById('tvhText').textContent = city.hiddenText;
+    
+    const key = 'hidden_claimed_' + cityId;
+    if (!travelData[key]) {
+        travelData[key] = true;
+        travelData.totalAffection += 20;
+        syncTravelAffection(20);
+        saveTravelData();
     }
-    window.closeTravelHidden = function() {
-        document.getElementById('travelHiddenModal').classList.remove('active');
-    };
+    
+    const modal = document.getElementById('travelHiddenModal');
+    if (modal.parentNode !== document.body) document.body.appendChild(modal);
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+}
+
+window.closeTravelHidden = function() {
+    const modal = document.getElementById('travelHiddenModal');
+    modal.classList.remove('active');
+    modal.style.display = 'none'; // 👈 核心修复：彻底隐藏
+};
     
     // ============ 好感同步 ============
     function syncTravelAffection(delta) {
